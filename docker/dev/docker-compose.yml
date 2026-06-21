@@ -1,0 +1,94 @@
+# Development environment
+# Quick start (from project root):
+#   copy docker\dev\.env.example .env
+#   docker compose -f docker/dev/docker-compose.yml up -d --build
+#   docker compose -f docker/dev/docker-compose.yml exec app composer install
+#   docker compose -f docker/dev/docker-compose.yml exec app php artisan key:generate
+#   docker compose -f docker/dev/docker-compose.yml exec app php artisan migrate
+#
+# App:  http://localhost:8080
+# Vite: http://localhost:5173
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/dev/php/Dockerfile
+    volumes:
+      - ../..:/var/www/html
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: truyen_audio
+      DB_USERNAME: truyen
+      DB_PASSWORD: secret
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      VITE_DEV_SERVER_URL: http://localhost:5173
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - truyen-audio-dev
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ../..:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - truyen-audio-dev
+
+  vite:
+    image: node:20-alpine
+    working_dir: /var/www/html
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../..:/var/www/html
+    environment:
+      VITE_DEV_SERVER_URL: http://localhost:5173
+      VITE_HMR_HOST: localhost
+      CHOKIDAR_USEPOLLING: "true"
+    command: sh docker/dev/vite/dev.sh
+    depends_on:
+      - app
+    networks:
+      - truyen-audio-dev
+
+  mysql:
+    image: mysql:8.4
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: truyen_audio
+      MYSQL_USER: truyen
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql-dev-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - truyen-audio-dev
+
+networks:
+  truyen-audio-dev:
+    driver: bridge
+
+volumes:
+  mysql-dev-data:
+    driver: local

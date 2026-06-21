@@ -1,0 +1,53 @@
+# Production environment (local test or deploy reference)
+# Quick start (from project root):
+#   copy docker\prod\.env.example .env
+#   docker compose -f docker/prod/docker-compose.yml up -d --build
+#
+# Build image only (Railway / Fly / K8s):
+#   docker build -f docker/prod/Dockerfile -t truyen-audio .
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/prod/Dockerfile
+    ports:
+      - "8080:80"
+    env_file:
+      - ../../.env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_HOST: mysql
+      RUN_MIGRATIONS: "true"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - truyen-audio-prod
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: truyen_audio
+      MYSQL_USER: truyen
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql-prod-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - truyen-audio-prod
+
+networks:
+  truyen-audio-prod:
+    driver: bridge
+
+volumes:
+  mysql-prod-data:
+    driver: local

@@ -4,9 +4,14 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig({
     plugins: [vue()],
     server: {
+        host: '0.0.0.0',
         port: 5173,
+        strictPort: true,
+        watch: {
+            usePolling: process.env.CHOKIDAR_USEPOLLING === 'true',
+        },
         hmr: {
-            host: 'localhost',
+            host: process.env.VITE_HMR_HOST || 'localhost',
             port: 5173,
         },
     },
