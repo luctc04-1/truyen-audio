@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kho Truyện | Truyện Audio</title>
+  <meta name="description" content="Kho truyện audio – Ngôn tình, giang hồ, trinh thám, học đường. Hàng ngàn tập chất lượng cao.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0 14px;
+      height: 44px;
+      transition: border-color 0.2s;
+    }
+    .search-bar:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(168,85,247,0.12);
+    }
+    .search-bar svg { width: 17px; height: 17px; color: var(--text-faint); flex-shrink: 0; }
+    .search-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .search-bar input::placeholder { color: var(--text-faint); }
+
+    /* Sort & filter row */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .sort-select {
+      appearance: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      padding: 6px 32px 6px 12px;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      transition: border-color 0.2s;
+    }
+    .sort-select:focus { outline: none; border-color: var(--primary); }
+
+    /* Active genre bar */
+    .active-genre-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-full);
+      padding: 4px 12px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .active-genre-pill button { color: var(--primary); opacity: 0.7; transition: opacity 0.2s; }
+    .active-genre-pill button:hover { opacity: 1; }
+
+    /* Story list item (alternate view) */
+    .story-list-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .story-list-item:last-child { border-bottom: none; }
+    .story-list-thumb {
+      width: 72px;
+      height: 108px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .story-list-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+    .story-list-item:hover .story-list-thumb img { transform: scale(1.05); }
+    .story-list-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+    .story-list-title { font-size: 15px; font-weight: 600; line-height: 1.4; margin-bottom: 6px; }
+    .story-list-item:hover .story-list-title { color: var(--primary); }
+    .story-list-author { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .story-list-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+    .story-list-stat { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); }
+    .story-list-stat span { display: flex; align-items: center; gap: 4px; }
+    .story-list-stat svg { width: 12px; height: 12px; }
+
+    /* View toggle */
+    .view-toggle {
+      display: flex;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .view-toggle button {
+      width: 36px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .view-toggle button.active { background: var(--primary-light); color: var(--primary); }
+    .view-toggle button svg { width: 16px; height: 16px; }
+
+    /* Genre sidebar pills (desktop) */
+    .genre-sidebar {
+      display: none;
+    }
+    @media (min-width: 1024px) {
+      .genre-sidebar { display: block; width: 220px; flex-shrink: 0; }
+      .kho-layout { display: flex; gap: 32px; align-items: flex-start; }
+      .kho-main { flex: 1; min-width: 0; }
+    }
+    .genre-sidebar-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .genre-sidebar-item:hover { background: var(--bg-muted); color: var(--text); }
+    .genre-sidebar-item.active { background: var(--primary-light); color: var(--primary); }
+    .genre-sidebar-count { font-size: 12px; opacity: 0.7; }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 28px 0 8px;
+    }
+    .page-btn {
+      min-width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .page-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .page-btn svg { width: 15px; height: 15px; }
+
+    /* Result count badge */
+    .result-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .result-count strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="container header-inner">
+    <nav class="nav">
+      <a href="index.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>Trang chủ</span>
+      </a>
+      <a href="kho-truyen.html" class="nav-link active">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+        <span>Kho truyện</span>
+      </a>
+      <a href="cong-dong.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Cộng đồng</span>
+      </a>
+      <a href="vip.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
+        <span>VIP</span>
+      </a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
+      <a href="profile.html"><button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button></a>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="container">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <h1 class="page-title">📚 Kho Truyện</h1>
+      <p class="page-subtitle">Hàng nghìn tập truyện audio chất lượng cao, cập nhật liên tục</p>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-bar" style="margin-bottom:16px;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="search-input" placeholder="Tìm kiếm truyện, tác giả…" autocomplete="off">
+      <button class="icon-btn" id="clear-search" style="display:none;" onclick="clearSearch()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Genre scrollbar (mobile) -->
+    <div class="genre-scroll" style="margin-bottom:16px;" id="genre-scroll-bar">
+      <div class="genre-pill active" data-genre="all" onclick="filterGenre(this)">🔍 Tất cả</div>
+      <div class="genre-pill" data-genre="ngontình" onclick="filterGenre(this)">💕 Ngôn Tình</div>
+      <div class="genre-pill" data-genre="audioài" onclick="filterGenre(this)">🎬 Audio Dài</div>
+      <div class="genre-pill" data-genre="trinhThám" onclick="filterGenre(this)">🕵️ Trinh Thám</div>
+      <div class="genre-pill" data-genre="giangHo" onclick="filterGenre(this)">🗡️ Giang Hồ</div>
+      <div class="genre-pill" data-genre="hocDuong" onclick="filterGenre(this)">💼 Học Đường</div>
+      <div class="genre-pill" data-genre="xuyenKhong" onclick="filterGenre(this)">✈️ Xuyên Không</div>
+      <div class="genre-pill" data-genre="roiNuocMat" onclick="filterGenre(this)">🎭 Rơi Nước Mắt</div>
+      <div class="genre-pill" data-genre="haiHuoc" onclick="filterGenre(this)">😂 Hài Hước</div>
+      <div class="genre-pill" data-genre="kinhDi" onclick="filterGenre(this)">👻 Kinh Dị</div>
+    </div>
+
+    <div class="kho-layout">
+
+      <!-- ===== SIDEBAR (Desktop only) ===== -->
+      <div class="genre-sidebar">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-faint);margin-bottom:10px;padding-left:4px;">Thể loại</div>
+        <div class="genre-sidebar-item active" onclick="sidebarGenre(this)">🔍 Tất cả <span class="genre-sidebar-count">1.2K</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">💕 Ngôn Tình <span class="genre-sidebar-count">438</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">🎬 Audio Dài <span class="genre-sidebar-count">294</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">🕵️ Trinh Thám <span class="genre-sidebar-count">187</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">🗡️ Giang Hồ <span class="genre-sidebar-count">163</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">💼 Học Đường <span class="genre-sidebar-count">122</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">✈️ Xuyên Không <span class="genre-sidebar-count">98</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">🎭 Rơi Nước Mắt <span class="genre-sidebar-count">74</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">😂 Hài Hước <span class="genre-sidebar-count">61</span></div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">👻 Kinh Dị <span class="genre-sidebar-count">43</span></div>
+
+        <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-faint);margin-bottom:10px;padding-left:4px;">Trạng thái</div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">✅ Hoàn thành</div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">🔄 Đang cập nhật</div>
+
+        <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-faint);margin-bottom:10px;padding-left:4px;">Truy cập</div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">🆓 Miễn phí</div>
+        <div class="genre-sidebar-item" onclick="sidebarGenre(this)">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
+            VIP
+          </span>
+        </div>
+      </div>
+
+      <!-- ===== MAIN CONTENT ===== -->
+      <div class="kho-main">
+
+        <!-- Filter row -->
+        <div class="filter-row">
+          <div class="result-count"><strong>1.248</strong> truyện</div>
+          <div style="flex:1;"></div>
+          <select class="sort-select" id="sort-select" onchange="sortChange()">
+            <option value="trending">🔥 Xu hướng</option>
+            <option value="newest">✨ Mới nhất</option>
+            <option value="most-listened">🎧 Nghe nhiều nhất</option>
+            <option value="completed">✅ Hoàn thành trước</option>
+            <option value="az">🔤 A → Z</option>
+          </select>
+          <div class="view-toggle">
+            <button class="active" id="grid-btn" onclick="setView('grid')" title="Dạng lưới">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </button>
+            <button id="list-btn" onclick="setView('list')" title="Dạng danh sách">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- === GRID VIEW === -->
+        <div id="grid-view">
+          <div class="stories-grid">
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge badge-success">Hoàn thành</span></div>
+              </div>
+              <div class="story-card-title">Nuôi Vợ Hào Môn Mà Không Hay Biết</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>52.1K <span>•</span> 43 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge">Đang cập nhật</span></div>
+              </div>
+              <div class="story-card-title">Vợ Tôi Giữ Gìn Cho Tình Đầu Sắp Trở Về</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>51.4K <span>•</span> 32 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge badge-success">Hoàn thành</span></div>
+              </div>
+              <div class="story-card-title">Chọn Vợ Giữa Chốn Hào Môn</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>47.8K <span>•</span> 12 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1495364141860-b0d03eccd065?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge badge-success">Hoàn thành</span></div>
+              </div>
+              <div class="story-card-title">Năm Nhất Đại Học Tôi Đã Có Bé Gái Và Vợ Tổng Tài</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>44.3K <span>•</span> 23 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge badge-success">Hoàn thành</span></div>
+              </div>
+              <div class="story-card-title">Thanh Mai Của Tôi Là Tiểu Thư Bắc Thành</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>31.6K <span>•</span> 23 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge">Đang cập nhật</span></div>
+              </div>
+              <div class="story-card-title">Tôi Và Cô Ấy Cùng Yêu Một Người</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>28.9K <span>•</span> 18 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1531266752426-aad472b7bbf4?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge">Đang cập nhật</span></div>
+              </div>
+              <div class="story-card-title">Hôn Nhân Không Tình Yêu</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>23.7K <span>•</span> 8 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1530023367847-a683933f4172?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge badge-success">Hoàn thành</span></div>
+              </div>
+              <div class="story-card-title">Anh Hùng Cứu Mỹ Nhân</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>22.1K <span>•</span> 15 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge badge-success">Hoàn thành</span></div>
+              </div>
+              <div class="story-card-title">Kẻ Phản Bội Và Người Tôi Yêu</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>18.3K <span>•</span> 18 tập</div>
+            </a>
+
+            <a href="detail-truyen.html" class="story-card">
+              <div class="story-card-thumb">
+                <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=300&q=80" alt="">
+                <div class="story-card-overlay"></div>
+                <div class="story-card-status"><span class="badge">Đang cập nhật</span></div>
+              </div>
+              <div class="story-card-title">Đêm Cuối Cùng Bên Em</div>
+              <div class="story-card-author">Sói Review 2510</div>
+              <div class="story-card-meta"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>9.7K <span>•</span> 3 tập</div>
+            </a>
+
+          </div>
+        </div>
+
+        <!-- === LIST VIEW (hidden by default) === -->
+        <div id="list-view" style="display:none;">
+          <div class="card" style="overflow:hidden;">
+
+            <div class="story-list-item" onclick="window.location='detail-truyen.html'">
+              <div class="story-list-thumb"><img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=200&q=80" alt=""></div>
+              <div class="story-list-info">
+                <div>
+                  <div class="story-list-title">Nuôi Vợ Hào Môn Mà Không Hay Biết</div>
+                  <div class="story-list-author">Sói Review 2510</div>
+                  <div class="story-list-tags">
+                    <span class="badge" style="font-size:10px;padding:1px 7px;">💕 Ngôn Tình</span>
+                    <span class="badge badge-success" style="font-size:10px;padding:1px 7px;">Hoàn thành</span>
+                  </div>
+                </div>
+                <div class="story-list-stat">
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>52.1K nghe</span>
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>43 tập</span>
+                  <span style="color:var(--amber);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679 5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428-4.618 2.428a.53.53 0 0 1-.77-.56l.881-5.139-3.736-3.638a.53.53 0 0 1 .294-.906l5.165-.755z"/></svg>5.0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="story-list-item" onclick="window.location='detail-truyen.html'">
+              <div class="story-list-thumb"><img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=200&q=80" alt=""></div>
+              <div class="story-list-info">
+                <div>
+                  <div class="story-list-title">Vợ Tôi Giữ Gìn Cho Tình Đầu Sắp Trở Về</div>
+                  <div class="story-list-author">Sói Review 2510</div>
+                  <div class="story-list-tags">
+                    <span class="badge" style="font-size:10px;padding:1px 7px;">💕 Ngôn Tình</span>
+                    <span class="badge" style="font-size:10px;padding:1px 7px;">Đang cập nhật</span>
+                  </div>
+                </div>
+                <div class="story-list-stat">
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>51.4K nghe</span>
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>32 tập</span>
+                  <span style="color:var(--amber);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679 5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428-4.618 2.428a.53.53 0 0 1-.77-.56l.881-5.139-3.736-3.638a.53.53 0 0 1 .294-.906l5.165-.755z"/></svg>4.8</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="story-list-item" onclick="window.location='detail-truyen.html'">
+              <div class="story-list-thumb"><img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=200&q=80" alt=""></div>
+              <div class="story-list-info">
+                <div>
+                  <div class="story-list-title">Chọn Vợ Giữa Chốn Hào Môn</div>
+                  <div class="story-list-author">Sói Review 2510</div>
+                  <div class="story-list-tags">
+                    <span class="badge" style="font-size:10px;padding:1px 7px;">🎬 Audio Dài</span>
+                    <span class="badge badge-success" style="font-size:10px;padding:1px 7px;">Hoàn thành</span>
+                  </div>
+                </div>
+                <div class="story-list-stat">
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>47.8K nghe</span>
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>12 tập</span>
+                  <span style="color:var(--amber);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679 5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428-4.618 2.428a.53.53 0 0 1-.77-.56l.881-5.139-3.736-3.638a.53.53 0 0 1 .294-.906l5.165-.755z"/></svg>4.9</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="story-list-item" onclick="window.location='detail-truyen.html'">
+              <div class="story-list-thumb"><img src="https://images.unsplash.com/photo-1495364141860-b0d03eccd065?w=200&q=80" alt=""></div>
+              <div class="story-list-info">
+                <div>
+                  <div class="story-list-title">Năm Nhất Đại Học Tôi Đã Có Bé Gái Và Vợ Tổng Tài</div>
+                  <div class="story-list-author">Sói Review 2510</div>
+                  <div class="story-list-tags">
+                    <span class="badge" style="font-size:10px;padding:1px 7px;">💼 Học Đường</span>
+                    <span class="badge badge-success" style="font-size:10px;padding:1px 7px;">Hoàn thành</span>
+                  </div>
+                </div>
+                <div class="story-list-stat">
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>44.3K nghe</span>
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>23 tập</span>
+                  <span style="color:var(--amber);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679 5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428-4.618 2.428a.53.53 0 0 1-.77-.56l.881-5.139-3.736-3.638a.53.53 0 0 1 .294-.906l5.165-.755z"/></svg>4.7</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="story-list-item" onclick="window.location='detail-truyen.html'">
+              <div class="story-list-thumb"><img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=200&q=80" alt=""></div>
+              <div class="story-list-info">
+                <div>
+                  <div class="story-list-title">Thanh Mai Của Tôi Là Tiểu Thư Bắc Thành</div>
+                  <div class="story-list-author">Sói Review 2510</div>
+                  <div class="story-list-tags">
+                    <span class="badge" style="font-size:10px;padding:1px 7px;">💕 Ngôn Tình</span>
+                    <span class="badge badge-success" style="font-size:10px;padding:1px 7px;">Hoàn thành</span>
+                  </div>
+                </div>
+                <div class="story-list-stat">
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>31.6K nghe</span>
+                  <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>23 tập</span>
+                  <span style="color:var(--amber);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679 5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428-4.618 2.428a.53.53 0 0 1-.77-.56l.881-5.139-3.736-3.638a.53.53 0 0 1 .294-.906l5.165-.755z"/></svg>4.9</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <button class="page-btn" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button class="page-btn active" onclick="gotoPage(1, this)">1</button>
+          <button class="page-btn" onclick="gotoPage(2, this)">2</button>
+          <button class="page-btn" onclick="gotoPage(3, this)">3</button>
+          <button class="page-btn" onclick="gotoPage(4, this)">4</button>
+          <button class="page-btn" onclick="gotoPage(5, this)">5</button>
+          <span style="color:var(--text-muted);padding:0 4px;">…</span>
+          <button class="page-btn" onclick="gotoPage(125, this)">125</button>
+          <button class="page-btn" id="next-page-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+      </div><!-- /kho-main -->
+    </div><!-- /kho-layout -->
+
+  </div><!-- /container -->
+</main>
+
+<!-- AUDIO PLAYER -->
+<div class="audio-player">
+  <div class="player-progress"><div class="player-progress-fill" style="width:35%;"></div></div>
+  <img class="player-thumb" src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=80&q=80" alt="">
+  <div class="player-info">
+    <div class="player-title">Tập 1: Nuôi Vợ Hào Môn Mà Không Hay Biết</div>
+    <div class="player-sub">Sói Review 2510</div>
+  </div>
+  <div class="player-controls">
+    <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></button>
+    <button class="player-play-btn" id="play-btn" onclick="let p=!this._p;this._p=p;this.innerHTML=p?'<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;><rect x=&quot;6&quot; y=&quot;4&quot; width=&quot;4&quot; height=&quot;16&quot;/><rect x=&quot;14&quot; y=&quot;4&quot; width=&quot;4&quot; height=&quot;16&quot;/></svg>':'<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot;><polygon points=&quot;6 3 20 12 6 21 6 3&quot;/></svg>'">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+    </button>
+    <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 5 7 7-7 7"/><path d="M5 12h14"/></svg></button>
+  </div>
+</div>
+
+<div class="social-float">
+  <a href="#" class="social-btn fb"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+  <a href="#" class="social-btn tt"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg></a>
+  <a href="#" class="social-btn yt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg></a>
+</div>
+
+<script>
+  // Genre filter (mobile pills)
+  function filterGenre(el) {
+    document.querySelectorAll('#genre-scroll-bar .genre-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    // Sync sidebar
+    const pills = document.querySelectorAll('.genre-sidebar-item');
+    const idx = [...document.querySelectorAll('#genre-scroll-bar .genre-pill')].indexOf(el);
+    document.querySelectorAll('.genre-sidebar-item').forEach(s => s.classList.remove('active'));
+    if (pills[idx]) pills[idx].classList.add('active');
+  }
+
+  // Sidebar genre (desktop)
+  function sidebarGenre(el) {
+    document.querySelectorAll('.genre-sidebar-item').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // View toggle
+  function setView(v) {
+    const isGrid = v === 'grid';
+    document.getElementById('grid-view').style.display = isGrid ? '' : 'none';
+    document.getElementById('list-view').style.display = isGrid ? 'none' : '';
+    document.getElementById('grid-btn').classList.toggle('active', isGrid);
+    document.getElementById('list-btn').classList.toggle('active', !isGrid);
+  }
+
+  // Pagination
+  function gotoPage(n, btn) {
+    document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Scroll to top of content
+    document.querySelector('.kho-main').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Search
+  const searchInput = document.getElementById('search-input');
+  const clearBtn   = document.getElementById('clear-search');
+  searchInput.addEventListener('input', () => {
+    clearBtn.style.display = searchInput.value ? 'flex' : 'none';
+  });
+  function clearSearch() {
+    searchInput.value = '';
+    clearBtn.style.display = 'none';
+    searchInput.focus();
+  }
+</script>
+</body>
+</html>
