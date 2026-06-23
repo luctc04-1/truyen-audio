@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tài khoản | Truyện Audio</title>
+  <meta name="description" content="Trang tài khoản – Quản lý hồ sơ, lịch sử nghe và gói VIP của bạn">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .profile-section { margin-bottom: 20px; }
+    .profile-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-faint);
+      padding: 0 20px 8px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .stat-cell {
+      background: var(--bg-card);
+      padding: 14px 8px;
+      text-align: center;
+    }
+    .stat-value { font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+    .stat-label { font-size: 11px; color: var(--text-muted); }
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .history-item:hover { background: var(--bg-muted); }
+    .history-thumb {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .history-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .history-info { flex: 1; min-width: 0; }
+    .history-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+    .history-meta { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .history-progress-bar { height: 3px; border-radius: 2px; background: var(--border); margin-top: 5px; }
+    .history-progress-fill { height: 100%; border-radius: 2px; background: var(--gradient-premium); }
+    .vip-status-card {
+      background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(236,72,153,0.08));
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .vip-status-icon {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--gradient-premium);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .vip-status-icon svg { width: 22px; height: 22px; color: #fff; }
+    .vip-status-label { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+    .vip-status-value { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .vip-status-expire { font-size: 11px; color: var(--text-muted); }
+    .vip-renew-btn {
+      margin-left: auto;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      background: var(--gradient-premium);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="container header-inner">
+    <nav class="nav">
+      <a href="index.html" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Trang chủ</span></a>
+      <a href="kho-truyen.html" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg><span>Kho truyện</span></a>
+      <a href="cong-dong.html" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Cộng đồng</span></a>
+      <a href="vip.html" class="nav-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg><span>VIP</span></a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
+      <button class="icon-btn" style="background:var(--primary-light);color:var(--primary);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="container" style="max-width:540px;">
+
+    <div class="page-header">
+      <h1 class="page-title">Tài khoản</h1>
+      <p class="page-subtitle">Quản lý hồ sơ và cài đặt của bạn</p>
+    </div>
+
+    <!-- PROFILE CARD -->
+    <div class="card profile-section animate-in">
+      <div class="profile-card">
+        <div class="profile-avatar-row">
+          <div class="profile-avatar">N</div>
+          <div style="flex:1;min-width:0;">
+            <div class="profile-name">Nguyễn Văn A</div>
+            <div class="profile-email">nguyenvana@gmail.com</div>
+            <div style="margin-top:6px;">
+              <span class="badge badge-gradient" style="font-size:11px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
+                Thành viên VIP
+              </span>
+            </div>
+          </div>
+          <button class="btn btn-outline btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            Sửa
+          </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stat-grid">
+          <div class="stat-cell">
+            <div class="stat-value text-gradient">127</div>
+            <div class="stat-label">Đã nghe</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-value text-gradient">43</div>
+            <div class="stat-label">Đang theo dõi</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-value text-gradient">286h</div>
+            <div class="stat-label">Thời gian nghe</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP STATUS -->
+    <div class="vip-status-card animate-in">
+      <div class="vip-status-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="vip-status-label">Gói hiện tại</div>
+        <div class="vip-status-value">VIP 3 Tháng</div>
+        <div class="vip-status-expire">Hết hạn: 09/09/2026 · Còn 92 ngày</div>
+      </div>
+      <a href="vip.html" class="vip-renew-btn">Gia hạn</a>
+    </div>
+
+    <!-- LISTENING HISTORY -->
+    <div class="profile-section">
+      <div class="card" style="overflow:hidden;">
+        <div style="padding:16px 16px 8px;display:flex;align-items:center;justify-content:space-between;">
+          <h2 style="font-size:15px;font-weight:700;">🕐 Nghe gần đây</h2>
+          <a href="#" style="font-size:12px;color:var(--primary);">Xem tất cả</a>
+        </div>
+
+        <div class="history-item">
+          <div class="history-thumb"><img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=100&q=80" alt=""></div>
+          <div class="history-info">
+            <div class="history-title">Nuôi Vợ Hào Môn Mà Không Hay Biết</div>
+            <div class="history-meta">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Tập 6 · Còn 32 phút
+            </div>
+            <div class="history-progress-bar"><div class="history-progress-fill" style="width:74%;"></div></div>
+          </div>
+          <button class="icon-btn" style="flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--primary)" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+          </button>
+        </div>
+
+        <div class="history-item">
+          <div class="history-thumb"><img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=100&q=80" alt=""></div>
+          <div class="history-info">
+            <div class="history-title">Vợ Tôi Giữ Gìn Cho Tình Đầu Sắp Trở Về</div>
+            <div class="history-meta"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Tập 2 · Còn 58 phút</div>
+            <div class="history-progress-bar"><div class="history-progress-fill" style="width:22%;"></div></div>
+          </div>
+          <button class="icon-btn" style="flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--primary)" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
+        </div>
+
+        <div class="history-item">
+          <div class="history-thumb"><img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=100&q=80" alt=""></div>
+          <div class="history-info">
+            <div class="history-title">Chọn Vợ Giữa Chốn Hào Môn</div>
+            <div class="history-meta"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Tập 12 · Hoàn thành</div>
+            <div class="history-progress-bar"><div class="history-progress-fill" style="width:100%;"></div></div>
+          </div>
+          <button class="icon-btn" style="flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKMARKS -->
+    <div class="profile-section">
+      <div class="card" style="overflow:hidden;">
+        <div style="padding:16px 16px 8px;display:flex;align-items:center;justify-content:space-between;">
+          <h2 style="font-size:15px;font-weight:700;">🔖 Truyện đang theo dõi</h2>
+          <a href="#" style="font-size:12px;color:var(--primary);">Xem tất cả</a>
+        </div>
+
+        <div class="story-scroll" style="padding:0 16px 16px;">
+          <a href="detail-truyen.html" class="story-card" style="width:120px;flex-shrink:0;">
+            <div class="story-card-thumb"><img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=200&q=80" alt=""><div class="story-card-overlay"></div><div class="story-card-status"><span class="badge badge-success" style="font-size:10px;padding:1px 6px;">Hoàn</span></div></div>
+            <div class="story-card-title">Nuôi Vợ Hào Môn</div>
+            <div class="story-card-meta" style="font-size:10px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>43 tập</div>
+          </a>
+          <a href="detail-truyen.html" class="story-card" style="width:120px;flex-shrink:0;">
+            <div class="story-card-thumb"><img src="https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=200&q=80" alt=""><div class="story-card-overlay"></div><div class="story-card-status"><span class="badge" style="font-size:10px;padding:1px 6px;">Cập nhật</span></div></div>
+            <div class="story-card-title">Vợ Tôi Giữ Gìn</div>
+            <div class="story-card-meta" style="font-size:10px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>32 tập</div>
+          </a>
+          <a href="detail-truyen.html" class="story-card" style="width:120px;flex-shrink:0;">
+            <div class="story-card-thumb"><img src="https://images.unsplash.com/photo-1495364141860-b0d03eccd065?w=200&q=80" alt=""><div class="story-card-overlay"></div><div class="story-card-status"><span class="badge badge-success" style="font-size:10px;padding:1px 6px;">Hoàn</span></div></div>
+            <div class="story-card-title">Năm Nhất Đại Học</div>
+            <div class="story-card-meta" style="font-size:10px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>23 tập</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENU ITEMS -->
+    <div class="profile-section">
+      <div class="card" style="overflow:hidden;">
+        <button class="profile-menu-item" style="width:100%;">
+          <div class="profile-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="profile-menu-text">
+            <div class="profile-menu-title">Thông tin cá nhân</div>
+            <div class="profile-menu-sub">Cập nhật tên, email, mật khẩu</div>
+          </div>
+          <div class="profile-menu-chevron"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></div>
+        </button>
+        <div class="divider" style="margin:0 20px;"></div>
+        <button class="profile-menu-item" style="width:100%;">
+          <div class="profile-menu-icon" style="background:rgba(168,85,247,0.1);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg></div>
+          <div class="profile-menu-text">
+            <div class="profile-menu-title">Gói VIP của tôi</div>
+            <div class="profile-menu-sub">Quản lý và gia hạn gói VIP</div>
+          </div>
+          <div class="profile-menu-chevron"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></div>
+        </button>
+        <div class="divider" style="margin:0 20px;"></div>
+        <button class="profile-menu-item" style="width:100%;">
+          <div class="profile-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+          <div class="profile-menu-text">
+            <div class="profile-menu-title">Thông báo</div>
+            <div class="profile-menu-sub">Cài đặt thông báo tập mới, khuyến mãi</div>
+          </div>
+          <div class="profile-menu-chevron"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></div>
+        </button>
+        <div class="divider" style="margin:0 20px;"></div>
+        <button class="profile-menu-item" style="width:100%;">
+          <div class="profile-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="profile-menu-text">
+            <div class="profile-menu-title">Cài đặt chung</div>
+            <div class="profile-menu-sub">Tốc độ nghe, chất lượng âm thanh</div>
+          </div>
+          <div class="profile-menu-chevron"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></div>
+        </button>
+        <div class="divider" style="margin:0 20px;"></div>
+        <button class="profile-menu-item" style="width:100%;">
+          <div class="profile-menu-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></div>
+          <div class="profile-menu-text">
+            <div class="profile-menu-title">Hỗ trợ & Liên hệ</div>
+            <div class="profile-menu-sub">Gửi yêu cầu hỗ trợ, phản hồi</div>
+          </div>
+          <div class="profile-menu-chevron"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="profile-section">
+      <div class="card" style="overflow:hidden;">
+        <button class="profile-menu-item danger" style="width:100%;" onclick="if(confirm('Bạn có chắc muốn đăng xuất?'))alert('Đã đăng xuất!')">
+          <div class="profile-menu-icon danger"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></div>
+          <div class="profile-menu-text">
+            <div class="profile-menu-title">Đăng xuất</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- App version -->
+    <div style="text-align:center;padding:8px 0 4px;font-size:11px;color:var(--text-faint);">
+      Truyện Audio v2.4.1 · <a href="#" style="color:var(--text-faint);text-decoration:underline;">Điều khoản</a> · <a href="#" style="color:var(--text-faint);text-decoration:underline;">Chính sách</a>
+    </div>
+
+  </div>
+</main>
+
+<!-- AUDIO PLAYER -->
+<div class="audio-player">
+  <div class="player-progress"><div class="player-progress-fill" style="width:74%;"></div></div>
+  <img class="player-thumb" src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=80&q=80" alt="">
+  <div class="player-info">
+    <div class="player-title">Tập 6: Nuôi Vợ Hào Môn Mà Không Hay Biết</div>
+    <div class="player-sub">Sói Review 2510 · 47:32 / 1:02:18</div>
+  </div>
+  <div class="player-controls">
+    <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></button>
+    <button class="player-play-btn" id="play-btn" onclick="togglePlay(this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    </button>
+    <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 5 7 7-7 7"/><path d="M5 12h14"/></svg></button>
+  </div>
+</div>
+
+<div class="social-float">
+  <a href="#" class="social-btn fb"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+  <a href="#" class="social-btn tt"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg></a>
+  <a href="#" class="social-btn yt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg></a>
+</div>
+
+<script>
+  let playing = true;
+  function togglePlay(btn) {
+    playing = !playing;
+    btn.innerHTML = playing
+      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+  }
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import EpisodePage from '../../views/EpisodePage.vue'
 import CommunityPage from '../../views/CommunityPage.vue'
 import VIPPage from '../../views/VIPPage.vue'
 import ProfilePage from '../../views/ProfilePage.vue'
+const AdminPage = () => import('../../views/AdminPage.vue')
 
 const routes = [
   {
@@ -44,6 +45,14 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: ProfilePage
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: AdminPage,
+    meta: {
+      admin: true
+    }
   }
 ]
 
