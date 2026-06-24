@@ -1,15 +1,22 @@
 <template>
   <router-link :to="`/story/${story.id}`" class="story-card">
     <div class="story-card-thumb">
-      <img :src="story.image" :alt="story.title" />
+      <img
+        :src="imgSrc"
+        :alt="story.title"
+        loading="lazy"
+        @error="onImgError"
+      />
       <div class="story-card-overlay"></div>
+
       <div class="story-card-status">
-        <span v-if="story.status === 'completed'" class="badge badge-success">Hoàn thành</span>
+        <VipBadge v-if="story.is_premium" />
+        <span v-else-if="story.status === 'completed'" class="badge badge-success">Hoàn thành</span>
         <span v-else class="badge">Đang cập nhật</span>
       </div>
     </div>
+
     <div class="story-card-title">{{ story.title }}</div>
-    <div class="story-card-author">{{ story.author }}</div>
     <div class="story-card-meta">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>
@@ -20,12 +27,27 @@
 </template>
 
 <script setup>
-defineProps({
+import { ref, watchEffect } from 'vue'
+import VipBadge from '@/components/VipBadge.vue'
+
+const FALLBACK = 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&q=80'
+
+const props = defineProps({
   story: {
     type: Object,
-    required: true
-  }
+    required: true,
+  },
 })
+
+const imgSrc = ref(props.story.image || FALLBACK)
+
+watchEffect(() => {
+  imgSrc.value = props.story.image || FALLBACK
+})
+
+const onImgError = () => {
+  imgSrc.value = FALLBACK
+}
 </script>
 
 <style scoped>
@@ -46,6 +68,7 @@ defineProps({
   aspect-ratio: 3 / 4;
   border-radius: var(--radius-md);
   overflow: hidden;
+  background: var(--bg-muted);
 }
 
 .story-card-thumb img {
@@ -56,19 +79,20 @@ defineProps({
 }
 
 .story-card:hover .story-card-thumb img {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .story-card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.8));
+  background: linear-gradient(to bottom, transparent 55%, rgba(0, 0, 0, 0.88));
 }
 
 .story-card-status {
   position: absolute;
-  top: 8px;
+  bottom: 8px;
   left: 8px;
+  z-index: 1;
 }
 
 .story-card-title {
@@ -85,11 +109,6 @@ defineProps({
   color: var(--primary);
 }
 
-.story-card-author {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
 .story-card-meta {
   display: flex;
   align-items: center;
@@ -98,10 +117,7 @@ defineProps({
   color: var(--text-muted);
 }
 
-.story-card-meta svg {
-  width: 14px;
-  height: 14px;
-}
+.story-card-meta svg { width: 14px; height: 14px; }
 
 .badge {
   display: inline-flex;

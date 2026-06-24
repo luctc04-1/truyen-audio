@@ -1,60 +1,32 @@
 import ApiService from './ApiService';
 
 /**
- * Story Service
- * Handles all story-related API calls
+ * Story / Series Service
+ * Gọi API series từ database
  */
-
 class StoryService {
-    /**
-     * Get all stories
-     *
-     * @param {Object} params
-     * @returns {Promise}
-     */
     async getStories(params = {}) {
-        return ApiService.get('/stories', params);
+        return ApiService.get('/series', params);
     }
 
-    /**
-     * Get story by ID
-     *
-     * @param {number} id
-     * @returns {Promise}
-     */
     async getStory(id) {
-        return ApiService.get(`/stories/${id}`);
+        return ApiService.get(`/series/${id}`);
     }
 
-    /**
-     * Create a new story
-     *
-     * @param {Object} data
-     * @returns {Promise}
-     */
-    async createStory(data) {
-        return ApiService.post('/stories', data);
+    async getEpisodes(seriesId) {
+        return ApiService.get(`/series/${seriesId}/episodes`);
     }
 
-    /**
-     * Update story
-     *
-     * @param {number} id
-     * @param {Object} data
-     * @returns {Promise}
-     */
-    async updateStory(id, data) {
-        return ApiService.put(`/stories/${id}`, data);
+    async getEpisode(id) {
+        return ApiService.get(`/episodes/${id}`);
     }
 
-    /**
-     * Delete story
-     *
-     * @param {number} id
-     * @returns {Promise}
-     */
-    async deleteStory(id) {
-        return ApiService.delete(`/stories/${id}`);
+    async getHotStories(limit = 10) {
+        return ApiService.get('/series', { is_hot: 1, sort: 'hot', per_page: limit });
+    }
+
+    async getRecentEpisodes(limit = 5) {
+        return ApiService.get('/episodes/recent', { limit });
     }
 }
 

@@ -1,13 +1,20 @@
 <template>
   <div class="app">
-    <AppHeader v-if="!isAdminRoute" />
-    <main :class="['main', { 'main-admin': isAdminRoute }]">
-      <router-view />
+    <AppHeader v-if="!isAdminRoute && !hideHeader" />
+    <main :class="['main', { 'main-admin': isAdminRoute, 'main-with-player': showMiniPlayer }]">
+      <router-view v-slot="{ Component }">
+        <keep-alive :include="['HomePage', 'LibraryPage']">
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
     </main>
-    <AudioPlayer v-if="$route.name !== 'Episode' && !isAdminRoute" />
+    <AudioPlayer v-if="showMiniPlayer" />
+    <NowPlaying />
+    <AuthOverlay />
+    <AppToast />
     
     <!-- SOCIAL FLOAT -->
-    <div v-if="!isAdminRoute" class="social-float">
+    <div v-if="!isAdminRoute" :class="['social-float', { 'social-float-raised': showMiniPlayer, 'social-float-auth': hideHeader }]">
       <a href="#" class="social-btn fb" title="Facebook">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
       </a>
@@ -26,9 +33,16 @@ import { useRoute } from 'vue-router'
 import { computed } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import AudioPlayer from './components/AudioPlayer.vue'
+import NowPlaying from './components/NowPlaying.vue'
+import AuthOverlay from './components/AuthOverlay.vue'
+import AppToast from './components/AppToast.vue'
+import { useAudioStore } from '@/stores/audioStore'
 
 const $route = useRoute()
-const isAdminRoute = computed(() => Boolean($route.meta.admin))
+const audio = useAudioStore()
+const isAdminRoute = computed(() => $route.meta.layout === 'admin')
+const hideHeader = computed(() => !!$route.meta.hideHeader)
+const showMiniPlayer = computed(() => !isAdminRoute.value && !!audio.currentEpisode)
 </script>
 
 <style>
@@ -127,6 +141,24 @@ input {
   border-radius: 99px;
 }
 
+/* Horizontal scroll — hide scrollbar, keep swipe/drag */
+.genre-scroll,
+.story-scroll,
+.write-tags,
+.post-filter-tabs,
+.scroll-x {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.genre-scroll::-webkit-scrollbar,
+.story-scroll::-webkit-scrollbar,
+.write-tags::-webkit-scrollbar,
+.post-filter-tabs::-webkit-scrollbar,
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -135,6 +167,10 @@ input {
 
 .main {
   flex: 1;
+  padding-bottom: 24px;
+}
+
+.main-with-player {
   padding-bottom: calc(var(--player-height) + 16px);
 }
 
@@ -145,12 +181,19 @@ input {
 /* ===== Social Float ===== */
 .social-float {
   position: fixed;
-  bottom: calc(var(--player-height) + 16px);
+  bottom: 16px;
   right: 16px;
   z-index: 80;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition: bottom 0.25s ease;
+}
+.social-float-raised {
+  bottom: calc(var(--player-height) + 16px);
+}
+.social-float-auth {
+  bottom: 16px;
 }
 .social-btn {
   width: 40px; height: 40px;

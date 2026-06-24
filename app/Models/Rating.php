@@ -15,12 +15,14 @@ class Rating extends Model
     public $timestamps = false;
 
     const CREATED_AT = 'created_at';
-    const UPDATED_AT = null;
+    const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
         'user_id',
         'series_id',
         'rating',
+        'content',
+        'updated_at',
     ];
 
     protected function casts(): array
@@ -28,10 +30,9 @@ class Rating extends Model
         return [
             'rating'     => 'integer',
             'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
     }
-
-    // ─── Relationships ────────────────────────────────────────────────
 
     public function user(): BelongsTo
     {

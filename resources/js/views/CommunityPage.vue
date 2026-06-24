@@ -173,7 +173,6 @@ const handlePost = () => {
 .write-box textarea::placeholder { color: var(--text-faint); }
 .write-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--bg-muted); }
 .write-tags { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
-.write-tags::-webkit-scrollbar { display: none; }
 .write-tag { padding: 4px 12px; border-radius: var(--radius-full); border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: all 0.2s; }
 .write-tag:hover { background: var(--bg-card); border-color: var(--primary); color: var(--primary); }
 .write-tag.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }

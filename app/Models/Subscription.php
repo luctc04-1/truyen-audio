@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Eloquent\Concerns\QueriesBooleanColumns;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Subscription extends Model
 {
-    use HasUuids;
+    use HasUuids, QueriesBooleanColumns;
 
     protected $table = 'subscriptions';
 
@@ -51,5 +52,17 @@ class Subscription extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class, 'order_id');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->whereBoolean('is_active', true);
+    }
+
+    public function scopeCurrentlyValid($query)
+    {
+        return $query->active()
+            ->where('start_at', '<=', now())
+            ->where('end_at', '>', now());
     }
 }

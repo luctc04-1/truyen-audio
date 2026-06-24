@@ -97,6 +97,10 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'require'),
+            // Neon/pgBouncer pooler: tránh lỗi "cached plan must not change result type" sau migration
+            'options' => extension_loaded('pdo_pgsql') ? array_filter([
+                PDO::ATTR_EMULATE_PREPARES => filter_var(env('DB_EMULATE_PREPARES', true), FILTER_VALIDATE_BOOL),
+            ]) : [],
         ],
 
         'sqlsrv' => [

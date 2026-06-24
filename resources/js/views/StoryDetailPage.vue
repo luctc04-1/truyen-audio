@@ -8,28 +8,41 @@
       </div>
       <div class="container">
         <!-- Back link -->
-        <router-link to="/library"
-          style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);margin-bottom:20px;transition:color 0.2s;">
+        <button @click="goBack"
+          style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);margin-bottom:20px;transition:color 0.2s;background:none;border:none;cursor:pointer;padding:0;position:relative;z-index:1;">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m15 18-6-6 6-6" />
           </svg>
-          Danh sách truyện
-        </router-link>
+          {{ backLabel }}
+        </button>
 
-        <div v-if="story" class="detail-hero-inner animate-in">
+        <div v-if="showSkeleton" class="detail-hero-inner detail-skeleton">
+          <div class="sk sk-cover"></div>
+          <div class="sk-info">
+            <div class="sk sk-line" style="width:60%;height:30px;"></div>
+            <div class="sk sk-line" style="width:40%;"></div>
+            <div class="sk sk-line" style="width:80%;"></div>
+            <div class="sk sk-line" style="width:50%;"></div>
+          </div>
+        </div>
+
+        <div v-else-if="story" class="detail-hero-inner animate-in">
           <div class="detail-cover">
             <img :src="story.image" :alt="story.title" />
           </div>
           <div class="detail-info">
             <div class="detail-badges">
-              <span class="badge badge-primary">💕 {{ story.genre || 'Ngôn Tình' }}</span>
-              <span class="badge badge-primary">🎬 Audio Dài</span>
-              <span class="badge badge-success" v-if="story.status === 'completed'">Hoàn thành</span>
-              <span class="badge badge-primary" v-else>Đang cập nhật</span>
+              <span
+                v-for="label in storyCategoryDisplay"
+                :key="label"
+                class="category-pill"
+              >{{ label }}</span>
+              <VipBadge v-if="story.is_premium" size="md" extra-class="badge-status" />
+              <span v-else-if="story.status === 'completed'" class="badge badge-success badge-status">Hoàn thành</span>
+              <span v-else class="badge badge-status">Đang cập nhật</span>
             </div>
             <h1 class="detail-title">{{ story.title }}</h1>
-            <p class="detail-producer">Nhà Sản Xuất: <span>{{ story.author }}</span></p>
             <div class="detail-stats">
               <span>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -57,15 +70,12 @@
               </span>
             </div>
             <div class="detail-actions">
-              <router-link :to="`/episode/${story.id}/1`">
-                <button class="btn btn-lg btn-primary">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                    fill="currentColor">
-                    <polygon points="6 3 20 12 6 21 6 3" />
-                  </svg>
-                  Nghe thử
-                </button>
-              </router-link>
+              <button v-if="episodes.length" class="btn btn-lg btn-primary" @click="playFirst">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="6 3 20 12 6 21 6 3" />
+                </svg>
+                Nghe ngay
+              </button>
               <button class="btn btn-lg btn-outline" @click="toggleFollow">
                 <svg v-if="isFollowed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                   fill="#ef4444">
@@ -97,107 +107,80 @@
     </section>
 
     <!-- TABS -->
-    <section v-if="story" style="padding-top:0;">
+    <section v-if="story || showSkeleton" style="padding-top:0;">
       <div class="container">
-        <div class="tabs-bar">
+        <div v-if="showSkeleton" class="tabs-bar">
+          <div class="sk sk-tab"></div>
+          <div class="sk sk-tab"></div>
+        </div>
+        <div v-else class="tabs-bar">
           <button :class="['tab-btn', { active: activeTab === 'episodes' }]" @click="activeTab = 'episodes'">
-            Danh sách tập ({{ story.episodeCount }})
+            Danh sách tập ({{ story?.episodeCount ?? 0 }})
           </button>
           <button :class="['tab-btn', { active: activeTab === 'reviews' }]" @click="activeTab = 'reviews'">
-            Đánh giá (2)
+            Đánh giá ({{ ratingCount }})
           </button>
         </div>
 
         <!-- Episodes tab -->
         <div :class="['tab-content', { active: activeTab === 'episodes' }]">
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <div v-for="(episode, index) in story.episodes" :key="episode.id"
-              :class="['episode-item', { playing: index === 0 }]"
-              @click="$router.push(`/episode/${story.id}/${episode.id}`)">
-              <div class="episode-thumb">
+          <div v-if="showSkeleton" style="display:flex;flex-direction:column;gap:8px;">
+            <div v-for="n in 4" :key="'sk-ep-' + n" class="episode-skeleton">
+              <div class="sk" style="width:72px;height:108px;border-radius:8px;"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center;">
+                <div class="sk sk-line" style="width:70%;"></div>
+                <div class="sk sk-line" style="width:30%;"></div>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="!episodes.length" style="padding:24px;text-align:center;color:var(--text-muted);">
+            Chưa có tập nào.
+          </div>
+          <div v-else style="display:flex;flex-direction:column;gap:4px;">
+            <div
+              v-for="episode in episodes"
+              :key="episode.id"
+              :class="['episode-item', { locked: playBlocked(episode), playing: audioStore.isCurrent(episode.id) }]"
+              :style="playBlocked(episode) ? 'opacity:0.65;cursor:default;' : ''"
+              @click="playEpisode(episode)"
+            >
+              <div class="episode-thumb" :style="playBlocked(episode) ? 'opacity:0.6;' : ''">
                 <img :src="story.image" :alt="episode.title" />
-                <div class="episode-thumb-overlay">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <div v-if="!playBlocked(episode)" class="episode-thumb-overlay">
+                  <svg v-if="isEpisodePlaying(episode)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                     <polygon points="6 3 20 12 6 21 6 3" />
                   </svg>
                 </div>
               </div>
               <div class="episode-info">
-                <div class="episode-title">{{ episode.title }}</div>
+                <div class="episode-title">{{ formatEpisodeWithTitle(episode.episode_number, episode.title) }}</div>
                 <div class="episode-meta">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
-                  {{ episode.duration || '1:06:01' }}
+                  {{ episode.duration || '0:00' }}
                 </div>
               </div>
-              <button class="icon-btn episode-play">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <VipBadge v-if="episode.is_premium" size="md" />
+              <button v-if="!playBlocked(episode)" class="icon-btn episode-play">
+                <svg v-if="isEpisodePlaying(episode)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                  <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                   <polygon points="6 3 20 12 6 21 6 3" />
                 </svg>
               </button>
-            </div>
-
-            <div v-for="ep in extraFreeEps" :key="'f' + ep.id" class="episode-item"
-              @click="$router.push(`/episode/${story.id}/${ep.id}`)">
-              <div class="episode-thumb">
-                <img :src="story.image" :alt="ep.title" />
-                <div class="episode-thumb-overlay">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                    <polygon points="6 3 20 12 6 21 6 3" />
-                  </svg>
-                </div>
-              </div>
-              <div class="episode-info">
-                <div class="episode-title">{{ ep.title }}</div>
-                <div class="episode-meta">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  {{ ep.duration }}
-                </div>
-              </div>
-              <button class="icon-btn episode-play">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                  <polygon points="6 3 20 12 6 21 6 3" />
-                </svg>
-              </button>
-            </div>
-
-            <div v-for="ep in vipEps" :key="'v' + ep.id" class="episode-item" style="opacity:0.65;cursor:default;">
-              <div class="episode-thumb" style="opacity:0.6;">
-                <img :src="story.image" :alt="ep.title" />
-              </div>
-              <div class="episode-info">
-                <div class="episode-title">{{ ep.title }}</div>
-                <div class="episode-meta">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  {{ ep.duration }}
-                </div>
-              </div>
-              <div class="ep-locked">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2">
-                  <path
-                    d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" />
-                  <path d="M5 21h14" />
-                </svg>
-                VIP
-              </div>
             </div>
 
             <div
+              v-if="hasPremiumEpisodes && !auth.isPremium"
               style="background:linear-gradient(135deg,rgba(168,85,247,0.1),rgba(236,72,153,0.08));border:1px solid rgba(168,85,247,0.25);border-radius:12px;padding:16px;text-align:center;margin-top:8px;">
-              <p style="font-size:13px;color:#a1a1aa;margin-bottom:10px;">🔒 Tập 7 đến {{ story.episodeCount || 43 }}
-                chỉ dành cho thành viên VIP</p>
+              <p style="font-size:13px;color:#a1a1aa;margin-bottom:10px;">🔒 Một số tập chỉ dành cho thành viên VIP</p>
               <router-link to="/vip">
                 <button class="btn btn-primary btn-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -215,91 +198,118 @@
 
         <!-- Reviews tab -->
         <div :class="['tab-content', { active: activeTab === 'reviews' }]">
-          <div style="display:flex;flex-direction:column;gap:16px;">
-            <div class="card">
-              <div style="padding:16px;">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-                  <div
-                    style="width:36px;height:36px;border-radius:50%;background:rgba(168,85,247,0.12);color:#a855f7;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;">
-                    N</div>
-                  <div>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <span style="font-weight:600;font-size:14px;">Nguyễn Văn A</span>
-                      <div class="stars">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" v-for="i in 5" :key="'sa' + i"
-                          fill="#f59e0b">
-                          <path
-                            d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679 5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428-4.618 2.428a.53.53 0 0 1-.77-.60l.881-5.139-3.736-3.638a.53.53 0 0 1 .294-.906l5.165-.755z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div style="font-size:12px;color:#a1a1aa;">2 ngày trước</div>
-                  </div>
-                </div>
-                <p style="font-size:14px;line-height:1.6;color:#fafafa;">Bộ truyện hay lắm, giọng đọc của Sói Review
-                  2510 rất cuốn hút. Nghe một lần là nghiện ngay! Mong admin ra thêm nhiều tập nữa.</p>
-              </div>
-            </div>
-            <div class="card">
-              <div style="padding:16px;">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-                  <div
-                    style="width:36px;height:36px;border-radius:50%;background:rgba(168,85,247,0.12);color:#a855f7;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;">
-                    T</div>
-                  <div>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <span style="font-weight:600;font-size:14px;">Trần Thị B</span>
-                      <div class="stars">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" v-for="i in 4" :key="'sb' + i"
-                          fill="#f59e0b">
-                          <path
-                            d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679 5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638.882 5.14a.53.53 0 0 1-.771.60l-4.618-2.428-4.618 2.428a.53.53 0 0 1-.77-.60l.881-5.139-3.736-3.638a.53.53 0 0 1 .294-.906l5.165-.755z" />
-                        </svg>
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#f59e0b"
-                          stroke-width="1.5">
-                          <path
-                            d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679 5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638.882 5.14a.53.53 0 0 1-.771.60l-4.618-2.428-4.618 2.428a.53.53 0 0 1-.77-.60l.881-5.139-3.736-3.638a.53.53 0 0 1 .294-.906l5.165-.755z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div style="font-size:12px;color:#a1a1aa;">5 ngày trước</div>
-                  </div>
-                </div>
-                <p style="font-size:14px;line-height:1.6;color:#fafafa;">Truyện hay, nội dung cuốn hút. Tuy nhiên một số
-                  tập hơi ngắn. Nhìn chung vẫn rất đáng nghe!</p>
-              </div>
-            </div>
-          </div>
+          <StoryRatingsTab
+            v-if="story"
+            :series-id="story.id"
+            @count-change="ratingCount = $event"
+            @rated="onRated"
+          />
         </div>
+
+        <!-- Comments — luôn hiển thị dưới tabs -->
+        <StoryCommentsSection v-if="story" :series-id="story.id" />
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useStoryStore } from '../js/stores/storyStore'
+import { useStoryStore } from '@/stores/storyStore'
+import { useAudioStore } from '@/stores/audioStore'
+import { usePlayAccess } from '@/composables/usePlayAccess'
+import { formatEpisodeWithTitle } from '@/utils/helpers'
+import VipBadge from '@/components/VipBadge.vue'
+import StoryRatingsTab from '@/components/StoryRatingsTab.vue'
+import StoryCommentsSection from '@/components/StoryCommentsSection.vue'
+import { isFollowed as checkFollowed, toggleFollow as toggleFollowStorage } from '@/utils/follows'
 
 const route = useRoute()
 const router = useRouter()
 const storyStore = useStoryStore()
+const audioStore = useAudioStore()
+const { auth, playBlocked, ensurePlayAccess } = usePlayAccess()
+
+// Xác định trang trước dựa vào lịch sử điều hướng của Vue Router
+const backRoute = computed(() => {
+  const prev = window.history.state?.back ?? ''
+  if (prev === '/' || prev.startsWith('/?')) return '/'
+  return '/library'
+})
+
+const backLabel = computed(() => {
+  return backRoute.value === '/' ? 'Trang chủ' : 'Kho truyện'
+})
+
+const goBack = () => {
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    router.push('/library')
+  }
+}
 const activeTab = ref('episodes')
 const isFollowed = ref(false)
+const ratingCount = ref(0)
+
+const onRated = (average) => {
+  if (story.value && average != null) {
+    storyStore.patchStoryRating(story.value.id, average)
+  }
+}
 
 const story = computed(() => storyStore.getStoryById(route.params.id))
-const toggleFollow = () => { isFollowed.value = !isFollowed.value }
+const storyCategoryLabels = computed(() => {
+  const labels = story.value?.category_labels
+  if (Array.isArray(labels) && labels.length) return labels
+  if (story.value?.genre_label) return [story.value.genre_label]
+  return []
+})
+const storyCategoryDisplay = computed(() =>
+  storyStore.mapCategoryLabels(storyCategoryLabels.value)
+)
+const episodes = computed(() => story.value?.episodes ?? [])
+const hasPremiumEpisodes = computed(() => episodes.value.some((e) => e.is_premium))
+// Đồng bộ skeleton: thông tin chi tiết + danh sách tập cùng load, cùng hiện.
+const hasDetail = computed(() => episodes.value.length > 0)
+const showSkeleton = computed(() => storyStore.detailLoading && !hasDetail.value)
+const toggleFollow = () => {
+  if (!story.value?.id) return
+  isFollowed.value = toggleFollowStorage(story.value.id)
+}
 
-const extraFreeEps = [
-  { id: 3, title: 'Tập 3: Nuôi Vợ Hào Môn Mà Không Hay Biết', duration: '1:19:55' },
-  { id: 4, title: 'Tập 4: Nuôi Vợ Hào Môn Mà Không Hay Biết', duration: '1:20:02' },
-  { id: 5, title: 'Tập 5: Nuôi Vợ Hào Môn Mà Không Hay Biết', duration: '1:09:53' },
-  { id: 6, title: 'Tập 6: Nuôi Vợ Hào Môn Mà Không Hay Biết', duration: '1:07:31' },
-]
-const vipEps = [
-  { id: 7, title: 'Tập 7: Nuôi Vợ Hào Môn Mà Không Hay Biết', duration: '1:15:22' },
-  { id: 8, title: 'Tập 8: Nuôi Vợ Hào Môn Mà Không Hay Biết', duration: '1:11:08' },
-]
+const isEpisodePlaying = (episode) =>
+  audioStore.isCurrent(episode.id) && audioStore.isPlaying
+
+// Click tập -> phát ngay ở mini player (không rời trang).
+const playEpisode = (episode) => {
+  if (!ensurePlayAccess(episode)) return
+  audioStore.playEpisode(story.value, episode, episodes.value)
+}
+
+const playFirst = () => {
+  const first = auth.isPremium
+    ? episodes.value[0]
+    : episodes.value.find((e) => !e.is_premium)
+  if (first) playEpisode(first)
+}
+
+onMounted(() => {
+  storyStore.loadStoryDetail(route.params.id)
+  isFollowed.value = checkFollowed(route.params.id)
+})
+watch(() => route.params.id, (id) => {
+  if (id) {
+    storyStore.loadStoryDetail(id)
+    isFollowed.value = checkFollowed(id)
+  }
+})
+watch(() => auth.isPremium, () => {
+  if (route.params.id) {
+    storyStore.reloadStoryDetail(route.params.id)
+  }
+})
 </script>
 
 <style scoped>
@@ -408,17 +418,35 @@ const vipEps = [
   gap: 4px;
   padding: 2px 10px;
   border-radius: var(--radius-full);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   background: var(--bg-muted);
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
 
-.badge-primary {
-  background: var(--primary-light);
-  color: var(--primary);
-  border-color: var(--primary);
+.badge-tag {
+  font-size: 10px;
+  padding: 1px 7px;
+}
+
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--bg-muted);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  line-height: 1.25;
+}
+
+.badge-status {
+  font-size: 10px;
+  padding: 2px 8px;
 }
 
 .badge-success {
@@ -548,18 +576,8 @@ const vipEps = [
 .detail-title {
   font-size: clamp(22px, 4vw, 36px);
   font-weight: 700;
-  margin-bottom: 8px;
-  line-height: 1.2;
-}
-
-.detail-producer {
-  color: var(--text-muted);
-  font-size: 14px;
   margin-bottom: 20px;
-}
-
-.detail-producer span {
-  color: var(--text);
+  line-height: 1.2;
 }
 
 .detail-stats {
@@ -754,22 +772,6 @@ const vipEps = [
   }
 }
 
-.ep-locked {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--amber);
-  background: rgba(245, 158, 11, 0.08);
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
-}
-
-.ep-locked svg {
-  width: 11px;
-  height: 11px;
-}
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -786,15 +788,42 @@ const vipEps = [
   animation: fadeInUp 0.4s ease both;
 }
 
-.stars {
-  display: flex;
-  gap: 2px;
+/* ===== Skeletons ===== */
+.sk {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
 }
+.sk::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: shimmer 1.3s infinite;
+}
+.sk-line { height: 12px; }
+.sk-tab { width: 140px; height: 38px; border-radius: var(--radius-md); }
+@keyframes shimmer { 100% { transform: translateX(100%); } }
 
-.stars svg {
-  width: 14px;
-  height: 14px;
-  color: var(--amber);
-  fill: var(--amber);
+.detail-skeleton { gap: 24px; }
+.detail-skeleton .sk-cover {
+  width: 200px;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+.detail-skeleton .sk-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  padding-top: 12px;
+}
+.episode-skeleton {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
 }
 </style>

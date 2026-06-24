@@ -24,6 +24,9 @@ class User extends Authenticatable
         'username',
         'avatar_url',
         'is_admin',
+        'password',
+        'google_id',
+        'created_at',
     ];
 
     protected $hidden = [
@@ -79,6 +82,20 @@ class User extends Authenticatable
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class, 'user_id');
+    }
+
+    public function activeSubscription(): ?Subscription
+    {
+        return $this->subscriptions()
+            ->with('plan')
+            ->currentlyValid()
+            ->orderByDesc('end_at')
+            ->first();
+    }
+
+    public function isPremium(): bool
+    {
+        return (bool) $this->activeSubscription();
     }
 
     public function userNotifications(): HasMany
