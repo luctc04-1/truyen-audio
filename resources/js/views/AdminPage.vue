@@ -470,9 +470,9 @@
 </template>
 
 <script setup>
-import { useAdminDashboard } from '../js/admin/useAdminDashboard'
-import AdminSidebar from '../js/admin/components/AdminSidebar.vue'
-import AdminTopbar from '../js/admin/components/AdminTopbar.vue'
+import { useAdminDashboard } from '@/admin/useAdminDashboard'
+import AdminSidebar from '@/admin/components/AdminSidebar.vue'
+import AdminTopbar from '@/admin/components/AdminTopbar.vue'
 
 const {
   sidebarOpen,
@@ -498,6 +498,6 @@ const {
 </script>
 
 <style>
-@import '../css/admin/admin.css';
+@import '../../css/admin/admin.css';
 </style>
 

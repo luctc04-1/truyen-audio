@@ -2,6 +2,7 @@
 
 namespace App\Shared\Controllers;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller;
@@ -42,5 +43,16 @@ class BaseController extends Controller
             'message' => $message,
             'errors' => $errors,
         ], $code);
+    }
+
+    /** @return array<string, int> */
+    protected function paginationMeta(LengthAwarePaginator $paginator, array $extra = []): array
+    {
+        return array_merge([
+            'current_page' => $paginator->currentPage(),
+            'last_page'    => $paginator->lastPage(),
+            'per_page'     => $paginator->perPage(),
+            'total'        => $paginator->total(),
+        ], $extra);
     }
 }

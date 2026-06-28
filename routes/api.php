@@ -1,14 +1,62 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Modules\Admin\Controllers\SyncController;
+use App\Modules\Auth\Controllers\AuthController;
+use App\Modules\Plan\Controllers\PlanController;
+use App\Modules\Series\Controllers\CommentController;
+use App\Modules\Series\Controllers\EpisodeController;
+use App\Modules\Series\Controllers\RatingController;
+use App\Modules\Series\Controllers\SeriesController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 */
+
+// ─── Public: Truyện audio (JWT optional — để biết user VIP khi trả audio_url) ─
+Route::middleware('jwt.optional')->group(function () {
+    Route::prefix('series')->group(function () {
+        Route::get('/', [SeriesController::class, 'index']);
+        Route::get('/{id}', [SeriesController::class, 'show']);
+        Route::get('/{id}/episodes', [SeriesController::class, 'episodes']);
+        Route::get('/{id}/ratings', [RatingController::class, 'index']);
+        Route::get('/{id}/comments', [CommentController::class, 'index']);
+    });
+
+    Route::get('/episodes/recent', [EpisodeController::class, 'recent']);
+    Route::get('/episodes/{id}', [EpisodeController::class, 'show']);
+
+    // Alias cho frontend cũ (StoryService gọi /stories)
+    Route::get('/stories', [SeriesController::class, 'index']);
+    Route::get('/stories/{id}', [SeriesController::class, 'show']);
+});
+
+// ─── Public: Gói VIP ─────────────────────────────────────────────────────
+Route::get('/plans', [PlanController::class, 'index']);
+
+// ─── Auth ────────────────────────────────────────────────────────────────
+Route::prefix('auth')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/google', [AuthController::class, 'google']);
+
+    Route::middleware('jwt.auth')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
+});
+
+// ─── Đánh giá & bình luận (yêu cầu đăng nhập khi ghi) ───────────────────
+Route::middleware('jwt.auth')->group(function () {
+    Route::post('/series/{id}/ratings', [RatingController::class, 'store']);
+    Route::post('/series/{id}/comments', [CommentController::class, 'store']);
+    Route::post('/comments/{id}/like', [CommentController::class, 'toggleLike']);
+    Route::patch('/comments/{id}', [CommentController::class, 'update']);
+    Route::patch('/comments/{id}/pin', [CommentController::class, 'pin']);
+    Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
+});
 
 // ─── Admin: Đồng bộ dữ liệu từ Supabase ──────────────────────────────────
 Route::prefix('admin/sync')->group(function () {

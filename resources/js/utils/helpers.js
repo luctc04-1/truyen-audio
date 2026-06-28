@@ -1,9 +1,3 @@
-/**
- * Format time utility
- *
- * @param {number} seconds
- * @returns {string}
- */
 export const formatTime = (seconds) => {
     if (!seconds || seconds === 0) return '0:00';
 
@@ -16,6 +10,24 @@ export const formatTime = (seconds) => {
     }
 
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Nhãn tập: episode_number = 0 → "Full", còn lại → "Tập N".
+ */
+export const formatEpisodeLabel = (episodeNumber) => {
+    if (episodeNumber === 0 || episodeNumber === '0') return 'Full';
+    if (episodeNumber == null || episodeNumber === '') return '';
+    return `Tập ${episodeNumber}`;
+};
+
+/** Ghép nhãn tập + tên: "Tập 3 • Tên truyện" */
+export const formatEpisodeWithTitle = (episodeNumber, title) => {
+    const label = formatEpisodeLabel(episodeNumber);
+    const name = (title ?? '').trim();
+    if (!label) return name;
+    if (!name) return label;
+    return `${label} • ${name}`;
 };
 
 /**
@@ -74,4 +86,32 @@ export const throttle = (func, limit) => {
             setTimeout(() => (inThrottle = false), limit);
         }
     };
+};
+
+/** Unwrap Laravel API payload: { success, data } → data */
+export const extractApiPayload = (response) => response?.data ?? response;
+
+/**
+ * Thời gian tương đối tiếng Việt.
+ */
+export const formatRelativeTime = (iso) => {
+    if (!iso) return '';
+
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+
+    if (mins < 1) return 'Vừa xong';
+    if (mins < 60) return `${mins} phút trước`;
+
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days} ngày trước`;
+
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} tháng trước`;
+
+    const years = Math.floor(months / 12);
+    return `${years} năm trước`;
 };

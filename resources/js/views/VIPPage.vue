@@ -22,21 +22,34 @@
           <p style="font-size:13px;color:var(--text-muted);">Tất cả gói đều cho phép nghe không giới hạn</p>
 
           <!-- Plans grid -->
-          <div class="vip-plans">
+          <div v-if="loadingPlans" class="vip-plans">
+            <div v-for="n in 4" :key="'sk-plan-' + n" class="vip-plan vip-plan-skeleton">
+              <div class="sk sk-line sk-line-sm sk-w-55"></div>
+              <div class="sk sk-line sk-line-lg sk-w-75"></div>
+              <div class="sk sk-line sk-line-sm sk-w-65"></div>
+            </div>
+          </div>
+          <div v-else-if="plans.length" class="vip-plans">
             <div v-for="plan in plans" :key="plan.id" :class="['vip-plan', { active: selectedPlan === plan.id }]" @click="selectPlan(plan)">
               <div v-if="plan.badge" :class="['vip-plan-badge', plan.badgeColor || '']">{{ plan.badge }}</div>
               <div class="vip-plan-duration">{{ plan.duration }}</div>
               <div class="vip-plan-price">{{ plan.price }}</div>
-              <div class="vip-plan-per">{{ plan.per }}</div>
+              <div v-if="plan.per" class="vip-plan-per">{{ plan.per }}</div>
               <div v-if="plan.discount" class="vip-plan-discount">{{ plan.discount }}</div>
             </div>
           </div>
+          <div v-else class="vip-plans-empty">Không có gói VIP khả dụng.</div>
 
           <!-- Summary -->
-          <div class="vip-summary">
+          <div v-if="loadingPlans" class="vip-summary vip-summary-skeleton">
+            <div class="sk sk-line sk-line-sm sk-w-72"></div>
+            <div class="sk sk-line sk-line-lg sk-w-96"></div>
+            <div class="sk sk-line sk-line-sm sk-w-88"></div>
+          </div>
+          <div v-else-if="currentPlan" class="vip-summary">
             <div class="vip-summary-label">Thanh toán</div>
             <div class="vip-summary-price">{{ currentPlan.price }}</div>
-            <div class="vip-summary-period">cho {{ currentPlan.periodLabel }}</div>
+            <div class="vip-summary-period">cho {{ currentPlan.duration }}</div>
           </div>
 
           <!-- Features -->
@@ -107,19 +120,35 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import ApiService from '@/services/ApiService'
 
-const selectedPlan = ref('3month')
+const selectedPlan = ref(null)
 const btnLabel = ref('Đăng ký VIP ngay')
+const plans = ref([])
+const loadingPlans = ref(true)
 
-const plans = ref([
-  { id: '1month', duration: '1 Tháng', price: '37.000đ', per: '/ tháng', periodLabel: 'tháng' },
-  { id: '3month', duration: '3 Tháng', price: '99.000đ', per: '33.000đ / tháng', discount: 'Tiết kiệm 12%', badge: 'Phổ biến', periodLabel: '3 tháng' },
-  { id: '6month', duration: '6 Tháng', price: '179.000đ', per: '29.833đ / tháng', discount: 'Tiết kiệm 20%', periodLabel: '6 tháng' },
-  { id: '12month', duration: '12 Tháng', price: '299.000đ', per: '24.916đ / tháng', discount: 'Tiết kiệm 33%', badge: 'Rẻ nhất', badgeColor: 'green', periodLabel: 'năm' },
-])
+const currentPlan = computed(() =>
+  plans.value.find(p => p.id === selectedPlan.value) ?? plans.value[0] ?? null
+)
 
-const currentPlan = computed(() => plans.value.find(p => p.id === selectedPlan.value) || plans.value[1])
+const loadPlans = async () => {
+  loadingPlans.value = true
+  try {
+    const response = await ApiService.get('/plans')
+    const payload = response?.data ?? response
+    plans.value = Array.isArray(payload) ? payload : []
+    const popular = plans.value.find(p => p.code === 'vip_3m')
+    selectedPlan.value = popular?.id ?? plans.value[0]?.id ?? null
+  } catch (error) {
+    console.error('Không tải được gói VIP:', error)
+    plans.value = []
+  } finally {
+    loadingPlans.value = false
+  }
+}
+
+onMounted(loadPlans)
 
 const selectPlan = (plan) => { selectedPlan.value = plan.id }
 
@@ -178,8 +207,35 @@ const faqs = ref([
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Plans */
+.vip-plans-empty { margin: 16px 0; padding: 24px; text-align: center; font-size: 13px; color: var(--text-muted); }
 .vip-plans { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 16px 0; }
 @media (min-width: 480px) { .vip-plans { grid-template-columns: repeat(4, 1fr); } }
+
+.vip-plan-skeleton { pointer-events: none; cursor: default; padding: 18px 10px; }
+.vip-plan-skeleton .sk { margin: 0 auto; }
+.vip-plan-skeleton .sk-line-sm:first-child { margin-bottom: 8px; }
+.vip-plan-skeleton .sk-line-lg { margin-bottom: 6px; }
+.vip-summary-skeleton { min-height: 44px; }
+.sk-w-55 { width: 55%; }
+.sk-w-65 { width: 65%; }
+.sk-w-72 { width: 72px; }
+.sk-w-75 { width: 75%; }
+.sk-w-88 { width: 88px; }
+.sk-w-96 { width: 96px; }
+
+.sk {
+  background: linear-gradient(90deg, var(--bg-muted) 25%, rgba(255,255,255,0.06) 50%, var(--bg-muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+}
+.sk-line { height: 12px; }
+.sk-line-lg { height: 16px; }
+.sk-line-sm { height: 10px; }
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
 .vip-plan { position: relative; border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg-muted); }
 .vip-plan:hover { border-color: var(--primary); }

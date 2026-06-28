@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Eloquent\Concerns\QueriesBooleanColumns;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,13 +11,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Series extends Model
 {
-    use HasUuids;
+    use HasUuids, QueriesBooleanColumns;
 
     protected $table = 'series';
 
     protected $fillable = [
         'id',
-        'category_id',
+        'category',
         'source_site',
         'source_slug',
         'source_url',
@@ -56,10 +57,6 @@ class Series extends Model
 
     // ─── Relationships ────────────────────────────────────────────────
 
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class, 'category_id');
-    }
 
     public function tags(): BelongsToMany
     {

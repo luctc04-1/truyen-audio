@@ -105,6 +105,28 @@ class ApiService {
     }
 
     /**
+     * Make a PATCH request
+     *
+     * @param {string} endpoint
+     * @param {Object} data
+     * @returns {Promise}
+     */
+    async patch(endpoint, data = {}) {
+        try {
+            const response = await fetch(this.baseURL + endpoint, {
+                method: 'PATCH',
+                headers: this.getHeaders(),
+                body: JSON.stringify(data),
+            });
+
+            return this.handleResponse(response);
+        } catch (error) {
+            console.error('PATCH request failed:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Make a DELETE request
      *
      * @param {string} endpoint
@@ -131,10 +153,21 @@ class ApiService {
      * @returns {Promise}
      */
     async handleResponse(response) {
+        const contentType = response.headers.get('content-type') || '';
+
+        if (!contentType.includes('application/json')) {
+            throw new Error(
+                `API không trả JSON (${response.status}). Hãy mở qua Laragon hoặc cấu hình VITE_API_PROXY_TARGET.`
+            );
+        }
+
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.message || 'API request failed');
+            const error = new Error(data.message || 'API request failed');
+            error.status = response.status;
+            error.errors = data.errors ?? null;
+            throw error;
         }
 
         return data;

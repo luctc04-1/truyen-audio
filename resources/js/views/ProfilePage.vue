@@ -2,6 +2,20 @@
   <div class="profile-page">
     <div class="container">
 
+      <!-- GUEST STATE -->
+      <div v-if="!auth.isAuthenticated" class="guest-card animate-in">
+        <div class="guest-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h2 class="guest-title">Chưa đăng nhập</h2>
+        <p class="guest-subtitle">Đăng nhập để theo dõi truyện, lưu tiến trình nghe và nhiều hơn nữa.</p>
+        <div class="guest-actions">
+          <router-link to="/auth" class="btn btn-primary">Đăng nhập</router-link>
+          <router-link to="/auth?tab=register" class="btn btn-outline">Tạo tài khoản mới</router-link>
+        </div>
+      </div>
+
+      <template v-else>
       <div class="page-header">
         <h1 class="page-title">Tài khoản</h1>
         <p class="page-subtitle">Quản lý hồ sơ và cài đặt của bạn</p>
@@ -11,14 +25,17 @@
       <div class="card profile-section animate-in">
         <div class="profile-card">
           <div class="profile-avatar-row">
-            <div class="profile-avatar">N</div>
+            <div class="profile-avatar">{{ auth.avatarInitial }}</div>
             <div style="flex:1;min-width:0;">
-              <div class="profile-name">Nguyễn Văn A</div>
-              <div class="profile-email">nguyenvana@gmail.com</div>
+              <div class="profile-name">{{ auth.displayName }}</div>
+              <div class="profile-email">{{ auth.user?.email }}</div>
               <div style="margin-top:6px;">
-                <span class="badge badge-gradient" style="font-size:11px;">
+                <span v-if="auth.isPremium" class="badge badge-gradient" style="font-size:11px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
                   Thành viên VIP
+                </span>
+                <span v-else class="badge" style="font-size:11px;background:var(--bg-muted);color:var(--text-muted);">
+                  Tài khoản thường
                 </span>
               </div>
             </div>
@@ -47,16 +64,27 @@
       </div>
 
       <!-- VIP STATUS -->
-      <div class="vip-status-card animate-in">
+      <div v-if="auth.isPremium" class="vip-status-card animate-in">
         <div class="vip-status-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
         </div>
         <div style="flex:1;min-width:0;">
           <div class="vip-status-label">Gói hiện tại</div>
-          <div class="vip-status-value">VIP 3 Tháng</div>
-          <div class="vip-status-expire">Hết hạn: 09/09/2026 · Còn 92 ngày</div>
+          <div class="vip-status-value">{{ subscriptionPlanName }}</div>
+          <div class="vip-status-expire">{{ subscriptionExpireText }}</div>
         </div>
         <router-link to="/vip" class="vip-renew-btn">Gia hạn</router-link>
+      </div>
+      <div v-else class="vip-status-card animate-in" style="border-color:rgba(168,85,247,0.2);">
+        <div class="vip-status-icon" style="background:rgba(168,85,247,0.12);color:var(--primary);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="vip-status-label">Gói hiện tại</div>
+          <div class="vip-status-value">Tài khoản thường</div>
+          <div class="vip-status-expire">Nâng cấp VIP để nghe không giới hạn</div>
+        </div>
+        <router-link to="/vip" class="vip-renew-btn">Đăng ký VIP</router-link>
       </div>
 
       <!-- LISTENING HISTORY -->
@@ -128,7 +156,7 @@
       <!-- LOGOUT -->
       <div class="profile-section">
         <div class="card" style="overflow:hidden;">
-          <button class="profile-menu-item danger" style="width:100%;" @click="handleLogout">
+          <button class="profile-menu-item danger" style="width:100%;" :disabled="auth.isBusy" @click="showLogoutConfirm = true">
             <div class="profile-menu-icon danger">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
             </div>
@@ -144,11 +172,49 @@
         Truyện Audio v2.4.1 · <a href="#" style="color:var(--text-faint);text-decoration:underline;">Điều khoản</a> · <a href="#" style="color:var(--text-faint);text-decoration:underline;">Chính sách</a>
       </div>
 
+      </template>
+
     </div>
+
+    <ConfirmDialog
+      v-model="showLogoutConfirm"
+      variant="danger"
+      title="Đăng xuất"
+      message="Bạn có chắc muốn đăng xuất?"
+      confirm-text="Đăng xuất"
+      cancel-text="Huỷ"
+      @confirm="confirmLogout"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
+import { useRouter } from 'vue-router'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+
+const auth = useAuthStore()
+const router = useRouter()
+const showLogoutConfirm = ref(false)
+
+const subscriptionPlanName = computed(() =>
+  auth.user?.subscription?.plan_name ?? 'Gói VIP'
+)
+
+const subscriptionExpireText = computed(() => {
+  const endAt = auth.user?.subscription?.end_at
+  if (!endAt) return ''
+
+  const end = new Date(endAt)
+  if (Number.isNaN(end.getTime())) return ''
+
+  const pad = (n) => String(n).padStart(2, '0')
+  const formatted = `${pad(end.getDate())}/${pad(end.getMonth() + 1)}/${end.getFullYear()}`
+  const daysLeft = Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86400000))
+
+  return `Hết hạn: ${formatted} · Còn ${daysLeft} ngày`
+})
 const history = [
   { id: 1, title: 'Nuôi Vợ Hào Môn Mà Không Hay Biết', image: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=100&q=80', meta: 'Tập 6 · Còn 32 phút', progress: 74 },
   { id: 2, title: 'Vợ Tôi Giữ Gìn Cho Tình Đầu Sắp Trở Về', image: 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=100&q=80', meta: 'Tập 2 · Còn 58 phút', progress: 22 },
@@ -185,8 +251,8 @@ const menuItems = [
   },
 ]
 
-const handleLogout = () => {
-  if (confirm('Bạn có chắc muốn đăng xuất?')) alert('Đã đăng xuất!')
+const confirmLogout = async () => {
+  await auth.runLogoutFlow(router, '/')
 }
 </script>
 
@@ -194,6 +260,48 @@ const handleLogout = () => {
 .profile-page { min-height: 100vh; }
 .container { max-width: 540px; margin: 0 auto; padding: 24px 16px; }
 @media (min-width: 640px) { .container { padding: 32px 24px; } }
+
+.guest-card {
+  margin-top: 48px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  text-align: center;
+}
+.guest-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.guest-icon svg { width: 34px; height: 34px; }
+.guest-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.guest-subtitle { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+.guest-actions { display: flex; flex-direction: column; gap: 10px; }
+.guest-actions .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.guest-actions .btn-primary { background: var(--gradient-premium); color: #fff; }
+.guest-actions .btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+.guest-actions .btn-outline:hover { background: var(--bg-muted); }
 
 .page-header { margin-bottom: 20px; }
 .page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }

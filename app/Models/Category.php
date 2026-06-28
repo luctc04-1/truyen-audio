@@ -24,11 +24,4 @@ class Category extends Model
             'updated_at' => 'datetime',
         ];
     }
-
-    // ─── Relationships ────────────────────────────────────────────────
-
-    public function series(): HasMany
-    {
-        return $this->hasMany(Series::class, 'category_id');
-    }
 }

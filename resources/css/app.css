@@ -1,9 +1,10 @@
-@import 'tailwindcss';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
+/*
+ * App-level stylesheet.
+ *
+ * Hệ thống style chính nằm trong:
+ *   - resources/js/App.vue        (CSS variables + base layout)
+ *   - public/theme/style.css      (theme tĩnh)
+ *   - resources/css/admin/admin.css (giao diện admin)
+ *
+ * File này dành cho các override chung ở cấp ứng dụng.
+ */
