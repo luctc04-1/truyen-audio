@@ -16,6 +16,7 @@ class UserPresenter
             'avatar_url' => $user->avatar_url,
             'initial'    => self::initial($name),
             'is_premium' => $user->isPremium(),
+            'is_admin'   => (bool) $user->is_admin,
         ];
     }
 

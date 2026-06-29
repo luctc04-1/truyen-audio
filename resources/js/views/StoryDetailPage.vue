@@ -60,7 +60,7 @@
                 </svg>
                 {{ story.episodeCount }} tập
               </span>
-              <span>
+              <span v-if="displayRatingCount > 0">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b"
                   stroke-width="1">
                   <path
@@ -76,20 +76,32 @@
                 </svg>
                 Nghe ngay
               </button>
-              <button class="btn btn-lg btn-outline" @click="toggleFollow">
-                <svg v-if="isFollowed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                  fill="#ef4444">
-                  <path
-                    d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path
-                    d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                </svg>
-                {{ isFollowed ? 'Đang theo dõi' : 'Theo dõi' }}
+              <button
+                class="btn btn-lg btn-outline"
+                :class="{ 'btn-followed': isFollowed }"
+                :disabled="followLoading"
+                @click="toggleFollow"
+              >
+                <ButtonSpinner
+                  v-if="followLoading"
+                  :variant="isFollowed ? 'amber' : 'muted'"
+                  :size="18"
+                />
+                <template v-else>
+                  <svg v-if="isFollowed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                    fill="#ef4444">
+                    <path
+                      d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                      d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                  </svg>
+                </template>
+                {{ isFollowed ? 'Bỏ theo dõi' : 'Theo dõi' }}
               </button>
-              <button class="btn btn-lg btn-outline">
+              <button class="btn btn-lg btn-outline" title="Chia sẻ" @click="shareCurrentStory">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="18" cy="5" r="3" />
@@ -201,7 +213,7 @@
           <StoryRatingsTab
             v-if="story"
             :series-id="story.id"
-            @count-change="ratingCount = $event"
+            @count-change="onRatingCountChange"
             @rated="onRated"
           />
         </div>
@@ -219,16 +231,19 @@ import { useRoute, useRouter } from 'vue-router'
 import { useStoryStore } from '@/stores/storyStore'
 import { useAudioStore } from '@/stores/audioStore'
 import { usePlayAccess } from '@/composables/usePlayAccess'
-import { formatEpisodeWithTitle } from '@/utils/helpers'
+import { formatEpisodeWithTitle, shareStory } from '@/utils/helpers'
 import VipBadge from '@/components/VipBadge.vue'
 import StoryRatingsTab from '@/components/StoryRatingsTab.vue'
 import StoryCommentsSection from '@/components/StoryCommentsSection.vue'
-import { isFollowed as checkFollowed, toggleFollow as toggleFollowStorage } from '@/utils/follows'
+import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import FollowService from '@/services/FollowService'
+import { useToastStore } from '@/stores/toastStore'
 
 const route = useRoute()
 const router = useRouter()
 const storyStore = useStoryStore()
 const audioStore = useAudioStore()
+const toast = useToastStore()
 const { auth, playBlocked, ensurePlayAccess } = usePlayAccess()
 
 // Xác định trang trước dựa vào lịch sử điều hướng của Vue Router
@@ -251,12 +266,53 @@ const goBack = () => {
 }
 const activeTab = ref('episodes')
 const isFollowed = ref(false)
+const followLoading = ref(false)
 const ratingCount = ref(0)
+
+const displayRatingCount = computed(() => {
+  const count = story.value?.rating_count ?? ratingCount.value
+  return Number(count) || 0
+})
+
+const onRatingCountChange = (count) => {
+  ratingCount.value = count
+  if (story.value) {
+    storyStore.upsertStory({ ...story.value, rating_count: count })
+  }
+}
 
 const onRated = (average) => {
   if (story.value && average != null) {
     storyStore.patchStoryRating(story.value.id, average)
   }
+}
+
+const toggleFollow = async () => {
+  if (!story.value?.id || followLoading.value) return
+
+  if (!auth.isAuthenticated) {
+    router.push({ name: 'Auth', query: { redirect: route.fullPath } })
+    return
+  }
+
+  followLoading.value = true
+  try {
+    const result = await FollowService.toggle(story.value.id)
+    isFollowed.value = !!result.is_followed
+    storyStore.upsertStory({ ...story.value, is_followed: isFollowed.value })
+    toast.success(isFollowed.value ? 'Đã theo dõi truyện' : 'Đã bỏ theo dõi')
+  } catch (error) {
+    toast.error(error.message || 'Không thể cập nhật theo dõi')
+  } finally {
+    followLoading.value = false
+  }
+}
+
+const shareCurrentStory = async () => {
+  if (!story.value) return
+  const result = await shareStory(story.value)
+  if (result === 'copied') toast.success('Đã sao chép liên kết')
+  else if (result === 'shared') toast.success('Đã chia sẻ')
 }
 
 const story = computed(() => storyStore.getStoryById(route.params.id))
@@ -274,10 +330,14 @@ const hasPremiumEpisodes = computed(() => episodes.value.some((e) => e.is_premiu
 // Đồng bộ skeleton: thông tin chi tiết + danh sách tập cùng load, cùng hiện.
 const hasDetail = computed(() => episodes.value.length > 0)
 const showSkeleton = computed(() => storyStore.detailLoading && !hasDetail.value)
-const toggleFollow = () => {
-  if (!story.value?.id) return
-  isFollowed.value = toggleFollowStorage(story.value.id)
-}
+
+watch(() => story.value?.is_followed, (val) => {
+  if (val != null) isFollowed.value = !!val
+}, { immediate: true })
+
+watch(() => story.value?.rating_count, (val) => {
+  if (val != null) ratingCount.value = Number(val) || 0
+}, { immediate: true })
 
 const isEpisodePlaying = (episode) =>
   audioStore.isCurrent(episode.id) && audioStore.isPlaying
@@ -297,12 +357,10 @@ const playFirst = () => {
 
 onMounted(() => {
   storyStore.loadStoryDetail(route.params.id)
-  isFollowed.value = checkFollowed(route.params.id)
 })
 watch(() => route.params.id, (id) => {
   if (id) {
     storyStore.loadStoryDetail(id)
-    isFollowed.value = checkFollowed(id)
   }
 })
 watch(() => auth.isPremium, () => {
@@ -410,6 +468,21 @@ watch(() => auth.isPremium, () => {
 .btn-outline:hover {
   background: var(--bg-muted);
   border-color: var(--primary);
+}
+
+.btn-outline.btn-followed {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.btn-outline.btn-followed:hover {
+  border-color: var(--red);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.btn-outline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .badge {

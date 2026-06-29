@@ -23,11 +23,11 @@
           :disabled="!draft.trim() || submitting"
           @click="submit()"
         >
-          <svg v-if="!submitting" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <ButtonSpinner v-if="submitting" variant="light" :size="14" />
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
           </svg>
-          <span v-else class="btn-spinner" aria-hidden="true"></span>
-          {{ submitting ? 'Đang gửi...' : 'Gửi bình luận' }}
+          Gửi bình luận
         </button>
       </div>
     </div>
@@ -53,6 +53,7 @@
         <CommentItem
           :comment="item"
           :deleting-comment-id="deletingCommentId"
+          :is-replying="replyingTo === item.id"
           @like="toggleLike"
           @reply="startReply"
           @delete="requestDelete"
@@ -74,8 +75,8 @@
               :disabled="!replyDraft.trim() || submitting"
               @click="submit(item.id)"
             >
-              <span v-if="submitting" class="btn-spinner" aria-hidden="true"></span>
-              {{ submitting ? 'Đang gửi...' : 'Gửi phản hồi' }}
+              <ButtonSpinner v-if="submitting" variant="light" :size="14" />
+              Gửi phản hồi
             </button>
           </div>
         </div>
@@ -84,7 +85,8 @@
 
     <div v-if="hasMore" class="load-more">
       <button class="btn btn-outline btn-sm" :disabled="loadingMore" @click="loadMore">
-        {{ loadingMore ? 'Đang tải...' : 'Xem thêm bình luận' }}
+        <ButtonSpinner v-if="loadingMore" variant="muted" :size="14" />
+        Xem thêm bình luận
       </button>
     </div>
 
@@ -92,7 +94,6 @@
       v-model="showDeleteConfirm"
       :auto-close="false"
       :confirm-loading="deleteConfirmLoading"
-      loading-text="Đang xóa..."
       variant="danger"
       title="Xóa bình luận"
       message="Bạn có chắc muốn xóa bình luận này? Hành động này không thể hoàn tác."
@@ -104,13 +105,15 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, provide } from 'vue'
+import { ref, computed, watch, onMounted, provide, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import ReviewService from '@/services/ReviewService'
+import { findNestedComment, optimisticToggleLike } from '@/utils/commentHelpers'
 import CommentItem from '@/components/CommentItem.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import ButtonSpinner from '@/components/ButtonSpinner.vue'
 
 const props = defineProps({
   seriesId: { type: String, required: true },
@@ -135,6 +138,7 @@ const showDeleteConfirm = ref(false)
 const deleteConfirmLoading = ref(false)
 const pendingDelete = ref(null)
 const deletingCommentId = ref(null)
+const likingCommentIds = reactive(new Set())
 
 const hasMore = computed(() => page.value < lastPage.value)
 
@@ -208,6 +212,10 @@ const startReply = (comment) => {
     goAuth()
     return
   }
+  if (replyingTo.value === comment.id) {
+    cancelReply()
+    return
+  }
   replyingTo.value = comment.id
   replyDraft.value = ''
 }
@@ -218,14 +226,7 @@ const cancelReply = () => {
   replyDraft.value = ''
 }
 
-const findComment = (id) => {
-  for (const item of items.value) {
-    if (item.id === id) return item
-    const reply = (item.replies || []).find((r) => r.id === id)
-    if (reply) return reply
-  }
-  return null
-}
+const findComment = (id) => findNestedComment(items.value, id)
 
 const toggleLike = async (comment) => {
   if (!auth.isAuthenticated) {
@@ -233,16 +234,13 @@ const toggleLike = async (comment) => {
     return
   }
 
-  try {
-    const result = await ReviewService.toggleLike(comment.id)
-    const target = findComment(comment.id)
-    if (target) {
-      target.like_count = result.like_count
-      target.liked_by_me = result.liked_by_me
-    }
-  } catch (error) {
-    toast.error(error.message || 'Không thể thích bình luận')
-  }
+  await optimisticToggleLike({
+    target: findComment(comment.id),
+    id: comment.id,
+    pendingSet: likingCommentIds,
+    apiCall: () => ReviewService.toggleLike(comment.id),
+    onError: (error) => toast.error(error.message || 'Không thể thích bình luận'),
+  })
 }
 
 const togglePin = async (comment) => {
@@ -328,6 +326,13 @@ watch(() => props.seriesId, () => load())
 .story-comments {
   margin-top: 32px;
   padding-top: 8px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+  .story-comments {
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .comments-heading {
@@ -431,7 +436,7 @@ watch(() => props.seriesId, () => load())
 }
 
 .comment-card {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .reply-compose {
@@ -513,19 +518,5 @@ watch(() => props.seriesId, () => load())
 .btn-sm {
   height: 32px;
   padding: 0 12px;
-}
-
-.btn-spinner {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-top-color: #fff;
-  animation: btn-spin 0.7s linear infinite;
-  flex-shrink: 0;
-}
-
-@keyframes btn-spin {
-  to { transform: rotate(360deg); }
 }
 </style>

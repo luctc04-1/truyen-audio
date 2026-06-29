@@ -3,6 +3,7 @@
 namespace App\Modules\Series\Controllers;
 
 use App\Models\Episode;
+use App\Models\Favorite;
 use App\Models\Series;
 use App\Modules\Series\Support\SeriesPresenter;
 use App\Shared\Controllers\BaseController;
@@ -52,11 +53,12 @@ class SeriesController extends BaseController
             ->select(self::LIST_COLUMNS)
             ->withCount('episodes');
 
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('narrator', 'like', "%{$search}%")
-                    ->orWhere('author', 'like', "%{$search}%");
+        if ($search = trim((string) $request->input('search'))) {
+            $escaped = addcslashes($search, '%_\\');
+            $query->where(function ($q) use ($escaped) {
+                $q->where('title', 'ilike', "%{$escaped}%")
+                    ->orWhere('narrator', 'ilike', "%{$escaped}%")
+                    ->orWhere('author', 'ilike', "%{$escaped}%");
             });
         }
 
@@ -105,7 +107,7 @@ class SeriesController extends BaseController
     {
         $series = Series::query()
             ->select(self::DETAIL_COLUMNS)
-            ->withCount('episodes')
+            ->withCount(['episodes', 'ratings'])
             ->find($id);
 
         if (! $series) {
@@ -115,8 +117,21 @@ class SeriesController extends BaseController
         $data             = SeriesPresenter::series($series);
         $data['episodes'] = $this->episodesForRequest($request, $id);
 
-        return $this->success($data, 'Chi tiết truyện')
-            ->header('Cache-Control', self::CACHE_DETAIL);
+        $user = $request->user();
+        if ($user) {
+            $data['is_followed'] = Favorite::query()
+                ->where('user_id', $user->id)
+                ->where('series_id', $id)
+                ->exists();
+        }
+
+        $response = $this->success($data, 'Chi tiết truyện');
+
+        if ($user) {
+            return $response->header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+        }
+
+        return $response->header('Cache-Control', self::CACHE_DETAIL);
     }
 
     public function episodes(Request $request, string $id): JsonResponse

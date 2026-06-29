@@ -2,18 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Favorite extends Model
+class CommunityPostCommentLike extends Model
 {
-    protected $table = 'favorites';
+    use HasUuids;
 
-    /**
-     * Composite primary key: (user_id, series_id)
-     */
-    protected $primaryKey = null;
-    public $incrementing = false;
+    protected $table = 'community_post_comment_likes';
+
     public $timestamps = false;
 
     const CREATED_AT = 'created_at';
@@ -21,8 +20,7 @@ class Favorite extends Model
 
     protected $fillable = [
         'user_id',
-        'series_id',
-        'created_at',
+        'comment_id',
     ];
 
     protected function casts(): array
@@ -32,15 +30,13 @@ class Favorite extends Model
         ];
     }
 
-    // ─── Relationships ────────────────────────────────────────────────
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function series(): BelongsTo
+    public function comment(): BelongsTo
     {
-        return $this->belongsTo(Series::class, 'series_id');
+        return $this->belongsTo(CommunityPostComment::class, 'comment_id');
     }
 }

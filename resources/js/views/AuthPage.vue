@@ -56,7 +56,8 @@
         <button type="button" class="forgot-link">Quên mật khẩu?</button>
 
         <button type="submit" class="btn btn-primary" :disabled="auth.isBusy">
-          {{ auth.isBusy ? 'Đang xử lý...' : 'Đăng nhập' }}
+          <ButtonSpinner v-if="auth.isBusy" variant="light" :size="16" />
+          Đăng nhập
         </button>
       </form>
 
@@ -116,7 +117,8 @@
         </label>
 
         <button type="submit" class="btn btn-primary" :disabled="auth.isBusy">
-          {{ auth.isBusy ? 'Đang xử lý...' : 'Đăng ký' }}
+          <ButtonSpinner v-if="auth.isBusy" variant="light" :size="16" />
+          Đăng ký
         </button>
       </form>
 
@@ -153,6 +155,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useGoogleAuth } from '@/composables/useGoogleAuth'
 import GoogleIcon from '@/components/GoogleIcon.vue'
+import ButtonSpinner from '@/components/ButtonSpinner.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -410,6 +413,10 @@ watch(() => route.query.tab, (value) => {
   font-size: 15px;
   font-weight: 700;
   transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn:disabled {
