@@ -31,13 +31,14 @@
         ></textarea>
         <div class="rating-form-footer">
           <span class="char-count">{{ draftContent.length }}/1000</span>
-          <button
-            class="btn btn-primary btn-sm"
-            :disabled="!draftRating || submitting"
-            @click="submit"
-          >
-            {{ submitting ? 'Đang gửi...' : 'Gửi đánh giá' }}
-          </button>
+            <button
+              class="btn btn-primary btn-sm"
+              :disabled="!draftRating || submitting"
+              @click="submit"
+            >
+              <ButtonSpinner v-if="submitting" variant="light" :size="14" />
+              Gửi đánh giá
+            </button>
         </div>
       </div>
 
@@ -79,6 +80,7 @@ import ReviewService from '@/services/ReviewService'
 import { formatRelativeTime } from '@/utils/helpers'
 import StarRating from '@/components/StarRating.vue'
 import VipBadge from '@/components/VipBadge.vue'
+import ButtonSpinner from '@/components/ButtonSpinner.vue'
 
 const props = defineProps({
   seriesId: { type: String, required: true },

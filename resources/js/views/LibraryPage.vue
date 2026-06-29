@@ -124,7 +124,13 @@
 
           <!-- No results -->
           <div v-if="!libLoading && !libError && libStories.length === 0" class="no-results">
-            <p>Không tìm thấy truyện phù hợp</p>
+            <p v-if="libraryFilter === 'following' && !auth.isAuthenticated">
+              Đăng nhập để xem các truyện bạn đang theo dõi.
+              <button type="button" class="btn btn-sm btn-outline" style="margin-top:12px;" @click="router.push({ name: 'Auth', query: { redirect: '/library' } })">
+                Đăng nhập
+              </button>
+            </p>
+            <p v-else>Không tìm thấy truyện phù hợp</p>
           </div>
 
           <!-- Pagination -->
@@ -155,11 +161,12 @@ export default { name: 'LibraryPage' }
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStoryStore } from '@/stores/storyStore'
+import { useAuthStore } from '@/stores/authStore'
 import StoryService from '@/services/StoryService'
+import FollowService from '@/services/FollowService'
 import StoryCard from '@/components/StoryCard.vue'
 import StoryCardSkeleton from '@/components/StoryCardSkeleton.vue'
 import VipBadge from '@/components/VipBadge.vue'
-import { getFollowedIds } from '@/utils/follows'
 
 const FILTER_OPTIONS = [
   { id: 'all', label: 'Tất cả' },
@@ -170,6 +177,7 @@ const FILTER_OPTIONS = [
 ]
 
 const storyStore = useStoryStore()
+const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -264,8 +272,12 @@ const fetchLibrary = async (page = 1, { force = false } = {}) => {
     let pagination = payload?.pagination ?? libPagination.value
 
     if (libraryFilter.value === 'following') {
-      const followed = new Set(getFollowedIds())
-      items = items.filter((s) => followed.has(String(s.id)))
+      if (!auth.isAuthenticated) {
+        items = []
+      } else {
+        const followed = new Set(await FollowService.getFollowedIds())
+        items = items.filter((s) => followed.has(String(s.id)))
+      }
       pagination = {
         current_page: 1,
         last_page: 1,

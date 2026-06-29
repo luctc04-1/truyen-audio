@@ -179,6 +179,7 @@
     <ConfirmDialog
       v-model="showLogoutConfirm"
       variant="danger"
+      icon="logout"
       title="Đăng xuất"
       message="Bạn có chắc muốn đăng xuất?"
       confirm-text="Đăng xuất"

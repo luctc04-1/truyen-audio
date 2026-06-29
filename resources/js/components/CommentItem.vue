@@ -12,12 +12,9 @@
     </div>
 
     <div class="comment-header">
-      <div class="user-avatar">{{ comment.user?.initial || 'U' }}</div>
+      <UserAvatar :user="comment.user" :size="isReply ? 'sm' : 'md'" />
       <div class="comment-meta">
-        <div class="user-name-row">
-          <span class="user-name">{{ comment.user?.username || 'Người dùng' }}</span>
-          <VipBadge v-if="comment.user?.is_premium" size="sm" />
-        </div>
+        <UserNameRow :user="comment.user" />
         <div class="time">
           {{ formatRelativeTime(comment.created_at) }}
           <span v-if="comment.is_edited" class="edited-tag">· đã chỉnh sửa</span>
@@ -77,7 +74,8 @@
             :disabled="!editDraft.trim() || isSaving"
             @click="saveEdit"
           >
-            {{ isSaving ? 'Đang lưu...' : 'Lưu' }}
+            <ButtonSpinner v-if="isSaving" variant="light" :size="14" />
+            Lưu
           </button>
         </div>
       </div>
@@ -87,9 +85,10 @@
 
     <div v-if="!editing" class="comment-footer">
       <button
-        :class="['action-btn', 'like', { liked: comment.liked_by_me }]"
+        type="button"
+        :class="['action-btn', 'like', { liked: comment.liked_by_me, popping: likePop }]"
         :disabled="isDeleting"
-        @click="$emit('like', comment)"
+        @click="onLikeClick"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" :fill="comment.liked_by_me ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
           <path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
@@ -98,7 +97,8 @@
       </button>
       <button
         v-if="!isReply"
-        class="action-btn reply"
+        type="button"
+        :class="['action-btn', 'reply', { active: isReplying }]"
         :disabled="isDeleting"
         @click="$emit('reply', comment)"
       >
@@ -124,16 +124,20 @@
 import { computed, inject, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { formatRelativeTime } from '@/utils/helpers'
-import VipBadge from '@/components/VipBadge.vue'
+import { useLikePop } from '@/composables/useLikePop'
+import UserAvatar from '@/components/UserAvatar.vue'
+import UserNameRow from '@/components/UserNameRow.vue'
+import ButtonSpinner from '@/components/ButtonSpinner.vue'
 import CommentItem from '@/components/CommentItem.vue'
 
 const props = defineProps({
   comment: { type: Object, required: true },
   isReply: { type: Boolean, default: false },
+  isReplying: { type: Boolean, default: false },
   deletingCommentId: { type: String, default: null },
 })
 
-defineEmits(['like', 'reply', 'delete', 'pin'])
+const emit = defineEmits(['like', 'reply', 'delete', 'pin'])
 
 const updateComment = inject('updateComment', null)
 
@@ -141,6 +145,12 @@ const auth = useAuthStore()
 const editing = ref(false)
 const editDraft = ref('')
 const isSaving = ref(false)
+const { likePop, triggerLikePop } = useLikePop()
+
+const onLikeClick = () => {
+  if (isDeleting.value) return
+  triggerLikePop(() => emit('like', props.comment))
+}
 
 const isDeleting = computed(() => props.deletingCommentId === props.comment.id)
 
@@ -237,36 +247,9 @@ const saveEdit = async () => {
   margin-bottom: 10px;
 }
 
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(168, 85, 247, 0.12);
-  color: #a855f7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 13px;
-  flex-shrink: 0;
-}
-
 .comment-meta {
   flex: 1;
   min-width: 0;
-}
-
-.user-name-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.user-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--amber, #f59e0b);
 }
 
 .time {
@@ -376,6 +359,15 @@ const saveEdit = async () => {
   cursor: pointer;
   padding: 4px 0;
   font-family: inherit;
+  transition: color 0.15s ease;
+}
+
+.action-btn svg {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.action-btn.like.popping svg {
+  transform: scale(1.25);
 }
 
 .action-btn:disabled {
@@ -385,6 +377,11 @@ const saveEdit = async () => {
 
 .action-btn.like.liked {
   color: #f59e0b;
+}
+
+.action-btn.reply.active {
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .action-btn.reply:hover:not(:disabled),

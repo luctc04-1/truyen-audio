@@ -69,9 +69,10 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
             <div v-for="method in paymentMethods" :key="method" class="pay-method">{{ method }}</div>
           </div>
-          <button class="btn btn-primary" style="width:100%;font-size:15px;height:48px;" @click="handleSubscribe">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
-            {{ btnLabel }}
+          <button class="btn btn-primary" style="width:100%;font-size:15px;height:48px;" :disabled="subscribing" @click="handleSubscribe">
+            <ButtonSpinner v-if="subscribing" variant="light" :size="18" />
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
+            {{ orderDone ? 'Đã đặt hàng!' : 'Đăng ký VIP ngay' }}
           </button>
           <p style="font-size:11px;color:var(--text-faint);text-align:center;margin-top:10px;">Bằng cách đăng ký, bạn đồng ý với điều khoản sử dụng</p>
         </div>
@@ -122,9 +123,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import ApiService from '@/services/ApiService'
+import ButtonSpinner from '@/components/ButtonSpinner.vue'
 
 const selectedPlan = ref(null)
-const btnLabel = ref('Đăng ký VIP ngay')
+const subscribing = ref(false)
+const orderDone = ref(false)
 const plans = ref([])
 const loadingPlans = ref(true)
 
@@ -153,8 +156,11 @@ onMounted(loadPlans)
 const selectPlan = (plan) => { selectedPlan.value = plan.id }
 
 const handleSubscribe = () => {
-  btnLabel.value = '⏳ Đang xử lý...'
-  setTimeout(() => { btnLabel.value = '✅ Đã đặt hàng!' }, 1200)
+  subscribing.value = true
+  setTimeout(() => {
+    subscribing.value = false
+    orderDone.value = true
+  }, 1200)
 }
 
 const scrollToCard = () => { document.querySelector('.vip-card')?.scrollIntoView({ behavior: 'smooth' }) }

@@ -40,6 +40,7 @@ class SeriesPresenter
             'plays_raw'    => (int) ($series->total_listens ?? $series->listen_count ?? 0),
             'episodeCount' => (int) ($series->total_episodes ?: $series->episodes_count ?? 0),
             'rating'       => round((float) ($series->average_rating ?? 0), 1),
+            'rating_count' => (int) ($series->ratings_count ?? 0),
             'is_premium'   => (bool) $series->is_premium,
             'is_hot'       => (bool) $series->is_hot,
             'hot_order'    => (int) ($series->hot_order ?? 0),

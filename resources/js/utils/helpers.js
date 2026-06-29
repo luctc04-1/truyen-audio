@@ -1,3 +1,6 @@
+export const SERIES_FALLBACK_COVER =
+    'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=120&q=80';
+
 export const formatTime = (seconds) => {
     if (!seconds || seconds === 0) return '0:00';
 
@@ -114,4 +117,41 @@ export const formatRelativeTime = (iso) => {
 
     const years = Math.floor(months / 12);
     return `${years} năm trước`;
+};
+
+/**
+ * Chia sẻ truyện — Web Share API hoặc sao chép link.
+ * @returns {'shared'|'copied'|'cancelled'|'failed'}
+ */
+export const shareStory = async (story) => {
+    if (!story?.id) return 'failed';
+
+    const url = `${window.location.origin}/story/${story.id}`;
+    const title = story.title || 'Truyện audio';
+    const text = `Nghe truyện audio: ${title}`;
+
+    if (navigator.share) {
+        try {
+            await navigator.share({ title, text, url });
+            return 'shared';
+        } catch (err) {
+            if (err?.name === 'AbortError') return 'cancelled';
+        }
+    }
+
+    try {
+        await navigator.clipboard.writeText(url);
+        return 'copied';
+    } catch {
+        const input = document.createElement('textarea');
+        input.value = url;
+        input.setAttribute('readonly', '');
+        input.style.position = 'absolute';
+        input.style.left = '-9999px';
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        return 'copied';
+    }
 };
