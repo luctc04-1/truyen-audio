@@ -15,25 +15,113 @@
     </button>
 
     <div class="player-controls">
-      <button class="player-speed" title="Tốc độ" @click.stop="audio.cycleSpeed()">{{ audio.speedLabel }}</button>
+      <!-- Speed popup -->
+      <div class="popup-wrap" @click.stop>
+        <button
+          class="player-speed"
+          :class="{ 'is-active': audio.speed !== 1 }"
+          title="Tốc độ phát"
+          @click="togglePopup('speed')"
+        >{{ audio.speedLabel }}</button>
+        <Transition name="popup-fade">
+          <div v-if="activePopup === 'speed'" class="popup speed-popup">
+            <div class="popup-title">TỐC ĐỘ PHÁT</div>
+            <div class="speed-display">{{ audio.speed.toFixed(2) }}x</div>
+            <input
+              type="range"
+              class="speed-slider"
+              min="0.5"
+              max="3"
+              step="0.05"
+              :value="audio.speed"
+              @input="audio.setSpeed(+$event.target.value)"
+            />
+            <div class="speed-presets">
+              <button
+                v-for="p in SPEED_PRESETS"
+                :key="p.value"
+                :class="['preset-btn', { active: Math.abs(audio.speed - p.value) < 0.01 }]"
+                @click="audio.setSpeed(p.value)"
+              >{{ p.label }}</button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+
+      <!-- Prev -->
       <button class="icon-btn" title="Tập trước" :disabled="!audio.hasPrev" @click.stop="audio.prev()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"/></svg>
       </button>
+
+      <!-- Play -->
       <button class="player-play-btn" @click.stop="audio.togglePlay()" :title="audio.isPlaying ? 'Tạm dừng' : 'Phát'">
         <svg v-if="audio.isBuffering" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
         <svg v-else-if="audio.isPlaying" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
         <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
       </button>
+
+      <!-- Next -->
       <button class="icon-btn" title="Tập tiếp" :disabled="!audio.hasNext" @click.stop="audio.next()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/></svg>
       </button>
-      <button class="icon-btn" :title="audio.muted ? 'Bật tiếng' : 'Tắt tiếng'" @click.stop="audio.toggleMute()">
-        <svg v-if="audio.muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-      </button>
-      <button class="icon-btn" title="Hẹn giờ" @click.stop="audio.cycleSleepTimer()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </button>
+
+      <!-- Volume popup -->
+      <div class="popup-wrap" @click.stop>
+        <button
+          class="icon-btn"
+          :class="{ 'is-active': !audio.muted && audio.volume > 0 }"
+          :title="audio.muted ? 'Bật tiếng' : 'Âm lượng'"
+          @click="togglePopup('volume')"
+        >
+          <svg v-if="audio.muted || audio.volume === 0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        </button>
+        <Transition name="popup-fade">
+          <div v-if="activePopup === 'volume'" class="popup volume-popup">
+            <div class="vol-value">{{ audio.muted ? 0 : Math.round(audio.volume * 100) }}</div>
+            <div class="vol-slider-wrap">
+              <input
+                type="range"
+                class="vol-slider"
+                min="0"
+                max="1"
+                step="0.01"
+                :value="audio.muted ? 0 : audio.volume"
+                @input="handleVolumeInput($event)"
+                orient="vertical"
+              />
+            </div>
+          </div>
+        </Transition>
+      </div>
+
+      <!-- Sleep popup -->
+      <div class="popup-wrap" @click.stop>
+        <button
+          class="icon-btn"
+          :class="{ 'is-active': audio.sleepTimer > 0 || audio.stopAfterEpisode }"
+          title="Hẹn giờ ngủ"
+          @click="togglePopup('sleep')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+        <Transition name="popup-fade">
+          <div v-if="activePopup === 'sleep'" class="sleep-popup">
+            <div class="popup-title">HẸN GIỜ NGỦ</div>
+            <div
+              v-for="opt in SLEEP_OPTIONS_LIST"
+              :key="opt.value"
+              :class="['sleep-opt', { active: isSleepActive(opt.value) }]"
+              @click="selectSleep(opt.value)"
+            >
+              <span>{{ opt.label }}</span>
+              <svg v-if="isSleepActive(opt.value)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+        </Transition>
+      </div>
+
+      <!-- Close -->
       <button class="icon-btn" title="Đóng" @click.stop="audio.stop()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
@@ -42,11 +130,62 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAudioStore } from '@/stores/audioStore'
 import { formatTime, formatEpisodeWithTitle } from '@/utils/helpers'
 
 const audio = useAudioStore()
+
+const SPEED_PRESETS = [
+  { value: 1,   label: 'Chuẩn' },
+  { value: 1.3, label: '1.3' },
+  { value: 1.5, label: '1.5' },
+  { value: 2.0, label: '2.0' },
+  { value: 3.0, label: '3.0' },
+]
+
+const SLEEP_OPTIONS_LIST = [
+  { value: 0,    label: 'Tắt' },
+  { value: 5,    label: '5 phút' },
+  { value: 10,   label: '10 phút' },
+  { value: 15,   label: '15 phút' },
+  { value: 30,   label: '30 phút' },
+  { value: 45,   label: '45 phút' },
+  { value: 60,   label: '60 phút' },
+  { value: -1,   label: 'Cuối tập' },
+]
+
+const activePopup = ref(null)
+
+const togglePopup = (name) => {
+  activePopup.value = activePopup.value === name ? null : name
+}
+
+const isSleepActive = (value) => {
+  if (value === -1) return audio.stopAfterEpisode
+  if (value === 0) return audio.sleepTimer === 0 && !audio.stopAfterEpisode
+  return audio.sleepTimer === value
+}
+
+const selectSleep = (value) => {
+  if (value === -1) {
+    audio.setStopAfterEpisode(true)
+  } else {
+    audio.setSleepTimer(value)
+  }
+  activePopup.value = null
+}
+
+const handleVolumeInput = (e) => {
+  audio.setVolume(+e.target.value)
+}
+
+const handleClickOutside = () => {
+  activePopup.value = null
+}
+
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 const title = computed(() => audio.currentEpisode?.title || '')
 const storyTitle = computed(() => audio.currentStory?.title || '')
@@ -138,7 +277,6 @@ const handleProgressClick = (e) => {
   transition: width 0.15s linear;
 }
 
-/* Vùng info co lại, ưu tiên chỗ cho controls */
 .player-media {
   display: flex;
   align-items: center;
@@ -202,19 +340,6 @@ const handleProgressClick = (e) => {
 
 .player-media:hover .player-title { opacity: 0.9; }
 
-.player-story {
-  font-size: 10px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.25;
-}
-
-@media (min-width: 480px) {
-  .player-story { font-size: 11px; }
-}
-
 .player-time {
   font-size: 10px;
   color: var(--text-muted);
@@ -228,7 +353,6 @@ const handleProgressClick = (e) => {
   .player-time { font-size: 11px; }
 }
 
-/* Luôn hiển thị đủ 7 nút */
 .player-controls {
   display: flex;
   align-items: center;
@@ -280,7 +404,8 @@ const handleProgressClick = (e) => {
   transition: all 0.2s;
   flex-shrink: 0;
 }
-.player-speed:hover { border-color: var(--primary); color: var(--text); }
+.player-speed:hover,
+.player-speed.is-active { border-color: var(--primary); color: var(--primary); }
 
 @media (min-width: 480px) {
   .player-speed { min-width: 34px; height: 30px; font-size: 11px; padding: 0 6px; }
@@ -303,6 +428,7 @@ const handleProgressClick = (e) => {
 }
 .icon-btn:hover:not(:disabled) { background: var(--bg-muted); color: var(--text); }
 .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.icon-btn.is-active { color: var(--primary); }
 .icon-btn svg { width: 14px; height: 14px; }
 
 @media (min-width: 480px) {
@@ -311,6 +437,165 @@ const handleProgressClick = (e) => {
 
 @media (min-width: 768px) {
   .icon-btn svg { width: 18px; height: 18px; }
+}
+
+/* ─── Popup wrapper ─── */
+.popup-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ─── Base popup ─── */
+.popup {
+ position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 210;
+  background: #1c1c22;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ─── Speed popup ─── */
+.speed-popup {
+  left: 0;
+  width: 210px;
+  padding: 14px 14px 12px;
+}
+
+.popup-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.speed-display {
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.speed-slider {
+  width: 100%;
+  accent-color: var(--primary);
+  cursor: pointer;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.speed-presets {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+.preset-btn {
+  flex: 1;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+.preset-btn:hover { border-color: var(--primary); color: var(--text); }
+.preset-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* ─── Volume popup ─── */
+.volume-popup {
+  right: 0;
+  width: 54px;
+  padding: 14px 0 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.vol-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.vol-slider-wrap {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vol-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 28px;
+  height: 110px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ─── Sleep popup ─── */
+.sleep-popup {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  z-index: 200;
+  background: #1c1c22;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  pointer-events: all;
+  right: 0;
+  min-width: 155px;
+  padding: 10px 0 6px;
+}
+
+.sleep-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  gap: 10px;
+}
+.sleep-opt:hover { background: var(--bg-muted); color: var(--text); }
+.sleep-opt.active { color: var(--primary); }
+.sleep-opt svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* ─── Popup transition ─── */
+.popup-fade-enter-active,
+.popup-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.popup-fade-enter-from,
+.popup-fade-leave-to {
+  opacity: 0;
+  transform: translateY(4px) scale(0.97);
 }
 
 .spin { animation: spin 0.8s linear infinite; }

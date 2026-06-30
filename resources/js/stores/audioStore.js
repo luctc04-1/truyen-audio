@@ -6,7 +6,7 @@ import { canPlayEpisode } from '@/utils/access'
 // Một instance Audio duy nhất cho toàn app (không đưa vào reactive state).
 let audio = null
 
-const SPEEDS = [0.75, 1, 1.25, 1.5, 2]
+const SPEEDS = [1, 1.3, 1.5, 2.0, 3.0]
 
 export const useAudioStore = defineStore('audio', () => {
   const currentStory = ref(null)
@@ -21,9 +21,10 @@ export const useAudioStore = defineStore('audio', () => {
   const muted = ref(false)
   const expanded = ref(false)
   const sleepTimer = ref(0)
+  const stopAfterEpisode = ref(false)
 
   let sleepHandle = null
-  const SLEEP_OPTIONS = [0, 15, 30, 60]
+  const SLEEP_OPTIONS = [0, 5, 10, 15, 30, 45, 60]
 
   const ensureAudio = () => {
     if (audio) return audio
@@ -47,7 +48,14 @@ export const useAudioStore = defineStore('audio', () => {
     audio.addEventListener('waiting', () => { isBuffering.value = true })
     audio.addEventListener('playing', () => { isBuffering.value = false })
     audio.addEventListener('canplay', () => { isBuffering.value = false })
-    audio.addEventListener('ended', () => { next() })
+    audio.addEventListener('ended', () => {
+      if (stopAfterEpisode.value) {
+        stopAfterEpisode.value = false
+        isPlaying.value = false
+        return
+      }
+      next()
+    })
 
     return audio
   }
@@ -208,6 +216,7 @@ export const useAudioStore = defineStore('audio', () => {
     isPlaying.value = false
     expanded.value = false
     setSleepTimer(0)
+    stopAfterEpisode.value = false
   }
 
   const expand = () => { expanded.value = true }
@@ -216,6 +225,7 @@ export const useAudioStore = defineStore('audio', () => {
 
   const setSleepTimer = (minutes) => {
     sleepTimer.value = minutes
+    stopAfterEpisode.value = false
     if (sleepHandle) {
       clearTimeout(sleepHandle)
       sleepHandle = null
@@ -226,6 +236,17 @@ export const useAudioStore = defineStore('audio', () => {
         sleepTimer.value = 0
         sleepHandle = null
       }, minutes * 60000)
+    }
+  }
+
+  const setStopAfterEpisode = (val) => {
+    stopAfterEpisode.value = val
+    if (val) {
+      sleepTimer.value = 0
+      if (sleepHandle) {
+        clearTimeout(sleepHandle)
+        sleepHandle = null
+      }
     }
   }
 
@@ -272,6 +293,8 @@ export const useAudioStore = defineStore('audio', () => {
     collapse,
     toggleExpand,
     setSleepTimer,
+    setStopAfterEpisode,
+    stopAfterEpisode,
     cycleSleepTimer,
   }
 })

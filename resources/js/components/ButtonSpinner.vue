@@ -13,7 +13,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'muted',
-    validator: (value) => ['light', 'muted', 'amber', 'danger'].includes(value),
+    validator: (value) => ['light', 'muted', 'amber', 'primary', 'danger'].includes(value),
   },
   size: { type: Number, default: 16 },
 })
@@ -46,6 +46,11 @@ const sizeStyle = computed(() => ({
 .btn-spinner--amber {
   border-color: rgba(245, 158, 11, 0.28);
   border-top-color: var(--amber, #f59e0b);
+}
+
+.btn-spinner--primary {
+  border-color: rgba(168, 85, 247, 0.28);
+  border-top-color: var(--primary, #a855f7);
 }
 
 .btn-spinner--danger {
