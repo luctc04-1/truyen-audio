@@ -9,7 +9,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
         </div>
         <h1 class="vip-hero-title">Trải Nghiệm <span class="text-gradient">VIP</span> Không Giới Hạn</h1>
-        <p class="vip-hero-desc">Mở khóa toàn bộ kho truyện premium, nghe mọi lúc mọi nơi, không quảng cáo, không gián đoạn</p>
+        <p class="vip-hero-desc">Truy cập không giới hạn vào thư viện truyện audio VIP với chất lượng cao nhất, không quảng cáo và nhiều đặc quyền hấp dẫn.</p>
       </div>
     </section>
 
@@ -65,22 +65,18 @@
 
         <!-- Payment methods -->
         <div style="background:var(--bg-muted);padding:16px 20px;">
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Phương thức thanh toán</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-            <div v-for="method in paymentMethods" :key="method" class="pay-method">{{ method }}</div>
-          </div>
-          <button class="btn btn-primary" style="width:100%;font-size:15px;height:48px;" :disabled="subscribing" @click="handleSubscribe">
+          <button class="btn btn-primary" style="width:100%;font-size:15px;height:48px;" :disabled="subscribing || !currentPlan" @click="handleSubscribe">
             <ButtonSpinner v-if="subscribing" variant="light" :size="18" />
             <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
-            {{ orderDone ? 'Đã đặt hàng!' : 'Đăng ký VIP ngay' }}
+            Thanh toán {{ currentPlan?.price }}
           </button>
-          <p style="font-size:11px;color:var(--text-faint);text-align:center;margin-top:10px;">Bằng cách đăng ký, bạn đồng ý với điều khoản sử dụng</p>
+          <p style="font-size:11px;color:var(--text-faint);text-align:center;margin-top:10px;">VIP được kích hoạt tự động sau khi thanh toán.</p>
         </div>
       </div>
 
       <!-- WHY VIP -->
       <section class="why-vip-section">
-        <h2 style="font-size:20px;font-weight:700;margin-bottom:20px;text-align:center;">Tại sao chọn VIP?</h2>
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:20px;text-align:center;">Tại sao nên đăng ký VIP?</h2>
         <div class="why-vip-grid">
           <div class="why-vip-item" v-for="item in whyVip" :key="item.title">
             <div class="why-vip-icon" v-html="item.icon"></div>
@@ -117,19 +113,43 @@
       </section>
 
     </div>
+
+    <VipPaymentModal
+      :open="paymentModalOpen"
+      :checkout="activeCheckout"
+      :success="paymentSuccess"
+      @close="closePaymentModal"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import ApiService from '@/services/ApiService'
+import OrderService from '@/services/OrderService'
 import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import VipPaymentModal from '@/components/VipPaymentModal.vue'
+import { useAuthStore } from '@/stores/authStore'
+import { useToastStore } from '@/stores/toastStore'
+import { getEcho } from '@/services/echo'
+
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+const toast = useToastStore()
+const { user, token, isAuthenticated } = storeToRefs(auth)
 
 const selectedPlan = ref(null)
 const subscribing = ref(false)
-const orderDone = ref(false)
 const plans = ref([])
 const loadingPlans = ref(true)
+const paymentModalOpen = ref(false)
+const paymentSuccess = ref(false)
+const activeCheckout = ref(null)
+
+let paymentChannel = null
 
 const currentPlan = computed(() =>
   plans.value.find(p => p.id === selectedPlan.value) ?? plans.value[0] ?? null
@@ -151,42 +171,127 @@ const loadPlans = async () => {
   }
 }
 
-onMounted(loadPlans)
+onMounted(async () => {
+  await loadPlans()
+  await checkReturnFromPayOs()
+})
+
+onUnmounted(() => {
+  stopPaymentWatchers()
+})
 
 const selectPlan = (plan) => { selectedPlan.value = plan.id }
 
-const handleSubscribe = () => {
+const handleSubscribe = async () => {
+  if (!isAuthenticated.value) {
+    router.push({ name: 'Auth', query: { redirect: '/vip' } })
+    return
+  }
+
+  if (!currentPlan.value) return
+
   subscribing.value = true
-  setTimeout(() => {
+  try {
+    const checkout = await OrderService.checkout(currentPlan.value.id)
+    activeCheckout.value = checkout
+    paymentSuccess.value = false
+    paymentModalOpen.value = true
+    startPaymentWatchers(checkout.order_code)
+  } catch (error) {
+    toast.error(error.message || 'Không tạo được đơn thanh toán.')
+  } finally {
     subscribing.value = false
-    orderDone.value = true
-  }, 1200)
+  }
+}
+
+const handlePaymentSuccess = (payload = null) => {
+  if (paymentSuccess.value) return
+
+  paymentSuccess.value = true
+  stopPaymentWatchers()
+
+  if (payload?.user) {
+    auth.user = payload.user
+  } else {
+    auth.fetchMe()
+  }
+
+  toast.success('Thanh toán thành công! VIP đã được kích hoạt.')
+}
+
+const startPaymentWatchers = (orderCode) => {
+  stopPaymentWatchers()
+
+  const echo = getEcho(token.value)
+  if (echo && user.value?.id) {
+    paymentChannel = echo.private(`user.${user.value.id}`)
+    paymentChannel.listen('.vip.payment.succeeded', (event) => {
+      if (Number(event.order_code) === Number(orderCode)) {
+        handlePaymentSuccess(event)
+      }
+    })
+  }
+}
+
+const stopPaymentWatchers = () => {
+  if (paymentChannel) {
+    paymentChannel.stopListening('.vip.payment.succeeded')
+    paymentChannel = null
+  }
+}
+
+const closePaymentModal = () => {
+  paymentModalOpen.value = false
+  paymentSuccess.value = false
+  activeCheckout.value = null
+  stopPaymentWatchers()
+}
+
+const checkReturnFromPayOs = async () => {
+  const orderCode = route.query.order_code
+  if (!orderCode || !isAuthenticated.value) return
+
+  try {
+    const status = await OrderService.status(orderCode)
+    if (status?.status === 'paid') {
+      await auth.fetchMe()
+      paymentSuccess.value = true
+      paymentModalOpen.value = true
+      toast.success('Thanh toán thành công! VIP đã được kích hoạt.')
+    } else if (status?.status === 'pending') {
+      activeCheckout.value = { order_code: Number(orderCode), plan_name: status.plan_name, amount: status.amount }
+      paymentModalOpen.value = true
+      startPaymentWatchers(Number(orderCode))
+    }
+  } catch {
+    // ignore
+  }
+
+  if (route.query.order_code) {
+    router.replace({ path: '/vip' })
+  }
 }
 
 const scrollToCard = () => { document.querySelector('.vip-card')?.scrollIntoView({ behavior: 'smooth' }) }
 
 const features = [
-  '<strong>Nghe không giới hạn</strong> tất cả tập VIP',
-  '<strong>Không quảng cáo</strong> - Trải nghiệm mượt mà',
-  '<strong>Tải về nghe offline</strong> trên ứng dụng',
-  '<strong>Hỗ trợ ưu tiên</strong> 24/7',
-  '<strong>Truy cập sớm</strong> các tập mới nhất',
+  '<span>Nghe không giới hạn tất cả tập VIP</span>',
+  '<span>Không quảng cáo - Trải nghiệm mượt mà</span>',
+  '<span>Huy hiệu Hội viên độc quyền</span>',
+  '<span>Truy cập sớm các tập mới nhất</span>',
 ]
-
-const paymentMethods = ['Momo', 'ZaloPay', 'VNPay', 'Chuyển khoản', 'Google Pay']
 
 const whyVip = [
   { title: 'Không giới hạn', desc: 'Nghe không giới hạn tất cả tập VIP trong kho', icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>' },
-  { title: 'Nghe offline', desc: 'Tải về thiết bị để nghe khi không có mạng', icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>' },
+  { title: 'Nghe không quảng cáo', desc: 'Trải nghiệm nghe truyện liền mạch, không bị gián đoạn', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles w-4.5 h-4.5 text-primary"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>' },
   { title: 'Truy cập sớm', desc: 'Được nghe trước khi tập mới phát hành đại trà', icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>' },
-  { title: 'Hỗ trợ 24/7', desc: 'Hỗ trợ ưu tiên qua chat và email cho thành viên VIP', icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>' },
+  { title: 'Nội dung mới mỗi tuần', desc: 'Các tập mới được cập nhật thường xuyên, không lo hết truyện', icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>' },
 ]
 
 const faqs = ref([
-  { q: 'VIP có tự động gia hạn không?', a: 'Không, VIP không tự động gia hạn. Bạn sẽ cần gia hạn thủ công khi gói hết hạn. Chúng tôi sẽ gửi thông báo trước 3 ngày.', open: false },
-  { q: 'Có thể nghe offline không?', a: 'Có, thành viên VIP có thể tải về tập truyện bất kỳ trên ứng dụng điện thoại để nghe khi không có kết nối internet.', open: false },
-  { q: 'Thanh toán bằng phương thức nào?', a: 'Chúng tôi hỗ trợ Momo, ZaloPay, VNPay, chuyển khoản ngân hàng và Google Pay. Thanh toán an toàn và bảo mật.', open: false },
-  { q: 'Tôi có được hoàn tiền nếu không hài lòng?', a: 'Chúng tôi có chính sách hoàn tiền trong vòng 7 ngày nếu bạn chưa sử dụng quá 30% thời gian gói. Liên hệ hỗ trợ để được giải quyết.', open: false },
+  { q: 'Làm thế nào để thanh toán?', a: 'Nhấn nút "Thanh toán", bạn sẽ được chuyển đến trang thanh toán PayOS. Hỗ trợ chuyển khoản ngân hàng, ví MoMo, ZaloPay và nhiều phương thức khác.', open: false },
+  { q: 'VIP được kích hoạt khi nào?', a: 'VIP được kích hoạt TỰ ĐỘNG ngay sau khi thanh toán thành công. Không cần chờ admin duyệt.', open: false },
+  { q: 'Thanh toán bằng phương thức nào?', a: 'Tùy theo gói bạn chọn: 1 tháng (30 ngày), 3 tháng (90 ngày), 6 tháng (180 ngày), hoặc 12 tháng (360 ngày).', open: false },
 ])
 </script>
 
@@ -264,9 +369,6 @@ const faqs = ref([
 .vip-feature { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .vip-feature-icon { width: 20px; height: 20px; border-radius: 50%; background: rgba(34,197,94,0.12); color: var(--success); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .vip-feature-icon svg { width: 12px; height: 12px; stroke: var(--success); }
-
-/* Payment */
-.pay-method { padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; }
 
 /* Button */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--radius-sm); font-weight: 500; transition: all 0.2s; cursor: pointer; font-family: inherit; }

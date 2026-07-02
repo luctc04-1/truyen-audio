@@ -31,6 +31,7 @@ class Order extends Model
     protected function casts(): array
     {
         return [
+            'order_code' => 'string',
             'amount'     => 'decimal:2',
             'paid_at'    => 'datetime',
             'created_at' => 'datetime',

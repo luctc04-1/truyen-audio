@@ -61,18 +61,84 @@
           </div>
 
           <div class="np-secondary">
-            <button class="np-sec-btn" title="Tốc độ" @click="audio.cycleSpeed()">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m6 6 3.5 3.5"/><circle cx="12" cy="14" r="8"/></svg>
-              {{ audio.speedLabel }}
-            </button>
-            <button class="np-sec-btn" :title="audio.muted ? 'Bật tiếng' : 'Tắt tiếng'" @click="audio.toggleMute()">
-              <svg v-if="audio.muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-            </button>
-            <button :class="['np-sec-btn', { active: audio.sleepTimer > 0 }]" title="Hẹn giờ" @click="audio.cycleSleepTimer()">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              {{ audio.sleepTimer > 0 ? audio.sleepTimer + 'p' : 'Hẹn giờ' }}
-            </button>
+            <!-- Speed popup -->
+            <div class="np-popup-wrap" @click.stop>
+              <button :class="['np-sec-btn', { active: audio.speed !== 1 }]" title="Tốc độ phát" @click="togglePopup('speed')">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m6 6 3.5 3.5"/><circle cx="12" cy="14" r="8"/></svg>
+                {{ audio.speedLabel }}
+              </button>
+              <Transition name="np-popup-fade">
+                <div v-if="activePopup === 'speed'" class="np-popup np-speed-popup">
+                  <div class="np-popup-title">TỐC ĐỘ PHÁT</div>
+                  <div class="np-speed-display">{{ audio.speed.toFixed(2) }}x</div>
+                  <input
+                    type="range"
+                    class="np-speed-slider"
+                    min="0.5"
+                    max="3"
+                    step="0.05"
+                    :value="audio.speed"
+                    @input="audio.setSpeed(+$event.target.value)"
+                  />
+                  <div class="np-speed-presets">
+                    <button
+                      v-for="p in SPEED_PRESETS"
+                      :key="p.value"
+                      :class="['np-preset-btn', { active: Math.abs(audio.speed - p.value) < 0.01 }]"
+                      @click="audio.setSpeed(p.value)"
+                    >{{ p.label }}</button>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- Volume popup -->
+            <div class="np-popup-wrap" @click.stop>
+              <button :class="['np-sec-btn', { active: !audio.muted && audio.volume > 0 }]" :title="audio.muted ? 'Bật tiếng' : 'Âm lượng'" @click="togglePopup('volume')">
+                <svg v-if="audio.muted || audio.volume === 0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                {{ audio.muted ? '0%' : Math.round(audio.volume * 100) + '%' }}
+              </button>
+              <Transition name="np-popup-fade">
+                <div v-if="activePopup === 'volume'" class="np-popup np-volume-popup">
+                  <div class="np-vol-value">{{ audio.muted ? 0 : Math.round(audio.volume * 100) }}</div>
+                  <div class="np-vol-slider-wrap">
+                    <input
+                      type="range"
+                      class="np-vol-slider"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      :value="audio.muted ? 0 : audio.volume"
+                      @input="handleVolumeInput($event)"
+                      orient="vertical"
+                    />
+                  </div>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- Sleep popup -->
+            <div class="np-popup-wrap" @click.stop>
+              <button :class="['np-sec-btn', { active: audio.sleepTimer > 0 || audio.stopAfterEpisode }]" title="Hẹn giờ ngủ" @click="togglePopup('sleep')">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                {{ audio.stopAfterEpisode ? 'Cuối tập' : audio.sleepTimer > 0 ? audio.sleepTimer + 'p' : 'Hẹn giờ' }}
+              </button>
+              <Transition name="np-popup-fade">
+                <div v-if="activePopup === 'sleep'" class="np-popup np-sleep-popup">
+                  <div class="np-popup-title">HẸN GIỜ NGỦ</div>
+                  <div
+                    v-for="opt in SLEEP_OPTIONS_LIST"
+                    :key="opt.value"
+                    :class="['np-sleep-opt', { active: isSleepActive(opt.value) }]"
+                    @click="selectSleep(opt.value)"
+                  >
+                    <span>{{ opt.label }}</span>
+                    <svg v-if="isSleepActive(opt.value)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                </div>
+              </Transition>
+            </div>
           </div>
         </div>
 
@@ -107,7 +173,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAudioStore } from '@/stores/audioStore'
 import { usePlayAccess } from '@/composables/usePlayAccess'
 import { formatTime, formatEpisodeWithTitle } from '@/utils/helpers'
@@ -115,6 +181,57 @@ import VipBadge from '@/components/VipBadge.vue'
 
 const audio = useAudioStore()
 const { playBlocked, ensurePlayAccess } = usePlayAccess()
+
+const SPEED_PRESETS = [
+  { value: 1,   label: 'Chuẩn' },
+  { value: 1.3, label: '1.3' },
+  { value: 1.5, label: '1.5' },
+  { value: 2.0, label: '2.0' },
+  { value: 3.0, label: '3.0' },
+]
+
+const SLEEP_OPTIONS_LIST = [
+  { value: 0,    label: 'Tắt' },
+  { value: 5,    label: '5 phút' },
+  { value: 10,   label: '10 phút' },
+  { value: 15,   label: '15 phút' },
+  { value: 30,   label: '30 phút' },
+  { value: 45,   label: '45 phút' },
+  { value: 60,   label: '60 phút' },
+  { value: -1,   label: 'Cuối tập' },
+]
+
+const activePopup = ref(null)
+
+const togglePopup = (name) => {
+  activePopup.value = activePopup.value === name ? null : name
+}
+
+const isSleepActive = (value) => {
+  if (value === -1) return audio.stopAfterEpisode
+  if (value === 0) return audio.sleepTimer === 0 && !audio.stopAfterEpisode
+  return audio.sleepTimer === value
+}
+
+const selectSleep = (value) => {
+  if (value === -1) {
+    audio.setStopAfterEpisode(true)
+  } else {
+    audio.setSleepTimer(value)
+  }
+  activePopup.value = null
+}
+
+const handleVolumeInput = (e) => {
+  audio.setVolume(+e.target.value)
+}
+
+const handleClickOutside = () => {
+  activePopup.value = null
+}
+
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 const story = computed(() => audio.currentStory)
 
@@ -197,7 +314,7 @@ const handleSeek = (e) => {
 .np-ctrl:hover:not(:disabled) { background: var(--bg-muted); color: var(--primary); }
 .np-ctrl:disabled { opacity: 0.3; cursor: not-allowed; }
 .np-ctrl svg { width: 26px; height: 26px; }
-.np-play { width: 72px; height: 72px; border-radius: 50%; background: var(--gradient-premium); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(168, 85, 247, 0.45); transition: transform 0.1s; }
+.np-play { width: 72px; height: 72px; border-radius: 50%; background: var(--gradient-premium); color: #fff; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
 .np-play:active { transform: scale(0.95); }
 .np-play:disabled { opacity: 0.5; cursor: not-allowed; }
 .np-play svg { width: 32px; height: 32px; }
@@ -229,4 +346,150 @@ const handleSeek = (e) => {
 /* Transition: trượt từ dưới lên */
 .np-slide-enter-active, .np-slide-leave-active { transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1); }
 .np-slide-enter-from, .np-slide-leave-to { transform: translateY(100%); }
+
+/* ─── Popup wrapper ─── */
+.np-popup-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ─── Base popup ─── */
+.np-popup {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 210;
+  background: #1c1c22;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ─── Speed popup ─── */
+.np-speed-popup {
+  width: 210px;
+  padding: 14px 14px 12px;
+}
+
+.np-popup-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.np-speed-display {
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.np-speed-slider {
+  width: 100%;
+  accent-color: var(--primary);
+  cursor: pointer;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.np-speed-presets {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+.np-preset-btn {
+  flex: 1;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.np-preset-btn:hover { border-color: var(--primary); color: var(--text); }
+.np-preset-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* ─── Volume popup ─── */
+.np-volume-popup {
+  width: 54px;
+  padding: 14px 0 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.np-vol-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.np-vol-slider-wrap {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.np-vol-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 28px;
+  height: 110px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ─── Sleep popup ─── */
+.np-sleep-popup {
+  min-width: 155px;
+  padding: 10px 0 6px;
+}
+
+.np-sleep-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  gap: 10px;
+}
+.np-sleep-opt:hover { background: var(--bg-muted); color: var(--text); }
+.np-sleep-opt.active { color: var(--primary); }
+.np-sleep-opt svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* ─── Popup transition ─── */
+.np-popup-fade-enter-active,
+.np-popup-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.np-popup-fade-enter-from,
+.np-popup-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px) scale(0.97);
+}
 </style>

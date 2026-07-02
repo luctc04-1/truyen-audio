@@ -4,7 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Modules\Admin\Controllers\SyncController;
 use App\Modules\Auth\Controllers\AuthController;
 use App\Modules\Community\Controllers\CommunityController;
+use App\Modules\Payment\Controllers\OrderController;
+use App\Modules\Payment\Controllers\PayOsWebhookController;
 use App\Modules\Plan\Controllers\PlanController;
+use Illuminate\Broadcasting\BroadcastController;
 use App\Modules\Series\Controllers\CommentController;
 use App\Modules\Series\Controllers\EpisodeController;
 use App\Modules\Series\Controllers\FavoriteController;
@@ -37,6 +40,19 @@ Route::middleware('jwt.optional')->group(function () {
 
 // ─── Public: Gói VIP ─────────────────────────────────────────────────────
 Route::get('/plans', [PlanController::class, 'index']);
+
+// ─── PayOS webhook (public) ──────────────────────────────────────────────
+Route::post('/webhooks/payos', [PayOsWebhookController::class, 'handle']);
+
+// ─── Đơn hàng VIP (yêu cầu đăng nhập) ────────────────────────────────────
+Route::middleware('jwt.auth')->prefix('orders')->group(function () {
+    Route::post('/', [OrderController::class, 'store']);
+    Route::get('/{orderCode}', [OrderController::class, 'show'])->whereNumber('orderCode');
+});
+
+// ─── Pusher auth (JWT) ───────────────────────────────────────────────────
+Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate'])
+    ->middleware('jwt.auth');
 
 // ─── Cộng đồng (đọc công khai, ghi yêu cầu đăng nhập) ────────────────────
 Route::middleware('jwt.optional')->prefix('community')->group(function () {

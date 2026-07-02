@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import AuthService from '@/services/AuthService';
 import { useToastStore } from '@/stores/toastStore';
 import { extractApiPayload } from '@/utils/helpers';
+import { getEcho, disconnectEcho } from '@/services/echo';
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref(null);
@@ -47,6 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         if (token.value) {
             localStorage.setItem('auth_token', token.value);
+            getEcho(token.value);
         }
     };
 
@@ -107,6 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         user.value = extractApiPayload(await AuthService.me());
+        getEcho(token.value);
         return user.value;
     };
 
@@ -123,6 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         try {
             await fetchMe();
+            getEcho(token.value);
         } catch {
             await logout();
         }
@@ -140,6 +144,7 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = null;
             token.value = null;
             localStorage.removeItem('auth_token');
+            disconnectEcho();
             resetLoadingIfIdle();
         }
     };
