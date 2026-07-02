@@ -9,7 +9,7 @@
           </svg>
           <span>Trang chủ</span>
         </router-link>
-        
+
         <router-link to="/library" :class="['nav-link', { active: $route.path === '/library' }]">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 7v14"/>
@@ -17,7 +17,7 @@
           </svg>
           <span>Kho truyện</span>
         </router-link>
-        
+
         <router-link to="/community" :class="['nav-link', { active: $route.path === '/community' }]">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -27,7 +27,7 @@
           </svg>
           <span>Cộng đồng</span>
         </router-link>
-        
+
         <router-link to="/vip" :class="['nav-link', { active: $route.path === '/vip' }]">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/>
@@ -36,7 +36,7 @@
           <span>VIP</span>
         </router-link>
       </nav>
-      
+
       <div class="header-actions">
         <button class="icon-btn" title="Thông báo">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -63,7 +63,7 @@
   top: 0;
   z-index: 100;
   height: var(--nav-height);
-  background: rgba(9, 9, 11, 0.85);
+  background: var(--bg-card);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
   display: flex;

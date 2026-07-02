@@ -17,7 +17,7 @@ class SeriesController extends BaseController
      */
     private const LIST_COLUMNS = [
         'id', 'category', 'slug', 'title', 'cover_url',
-        'author', 'narrator', 'source_site',
+        'author', 'narrator',
         'is_complete', 'is_premium', 'is_hot', 'hot_order',
         'total_episodes', 'total_listens', 'listen_count',
         'average_rating', 'created_at',
@@ -28,7 +28,7 @@ class SeriesController extends BaseController
      */
     private const DETAIL_COLUMNS = [
         'id', 'category', 'slug', 'title', 'cover_url',
-        'author', 'narrator', 'source_site', 'description',
+        'author', 'narrator', 'description',
         'is_complete', 'is_premium', 'is_hot',
         'total_episodes', 'total_listens', 'listen_count',
         'average_rating', 'created_at', 'updated_at',

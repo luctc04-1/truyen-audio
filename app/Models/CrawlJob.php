@@ -17,7 +17,6 @@ class CrawlJob extends Model
     const UPDATED_AT = null;
 
     protected $fillable = [
-        'source_site',
         'status',
         'total_series',
         'total_episodes',

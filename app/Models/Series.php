@@ -18,9 +18,6 @@ class Series extends Model
     protected $fillable = [
         'id',
         'category',
-        'source_site',
-        'source_slug',
-        'source_url',
         'slug',
         'title',
         'description',
@@ -56,12 +53,6 @@ class Series extends Model
     }
 
     // ─── Relationships ────────────────────────────────────────────────
-
-
-    public function tags(): BelongsToMany
-    {
-        return $this->belongsToMany(Tag::class, 'series_tags', 'series_id', 'tag_id');
-    }
 
     public function episodes(): HasMany
     {

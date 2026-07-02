@@ -12,7 +12,7 @@
     <NowPlaying />
     <AuthOverlay />
     <AppToast />
-    
+
     <!-- SOCIAL FLOAT -->
     <Teleport to="body">
       <div v-if="!isAdminRoute" :class="['social-float', { 'social-float-raised': showMiniPlayer, 'social-float-auth': hideHeader }]">
@@ -39,12 +39,15 @@ import NowPlaying from './components/NowPlaying.vue'
 import AuthOverlay from './components/AuthOverlay.vue'
 import AppToast from './components/AppToast.vue'
 import { useAudioStore } from '@/stores/audioStore'
+import { applyThemeToDocument } from '@/utils/theme'
 
 const $route = useRoute()
 const audio = useAudioStore()
 const isAdminRoute = computed(() => $route.meta.layout === 'admin')
 const hideHeader = computed(() => !!$route.meta.hideHeader)
 const showMiniPlayer = computed(() => !isAdminRoute.value && !!audio.currentEpisode)
+
+applyThemeToDocument(localStorage.getItem('theme') || 'dark')
 </script>
 
 <style>
@@ -63,6 +66,12 @@ const showMiniPlayer = computed(() => !isAdminRoute.value && !!audio.currentEpis
   --primary-hover: #9333ea;
   --primary-light: rgba(168, 85, 247, 0.12);
   --primary-light2: rgba(168, 85, 247, 0.06);
+  --primary-border: rgba(168, 85, 247, 0.4);
+  --primary-focus: rgba(168, 85, 247, 0.5);
+  --primary-light-border: rgba(168, 85, 247, 0.2);
+  --amber-light: rgba(245, 158, 11, 0.1);
+  --amber-ring: rgba(245, 158, 11, 0.18);
+  --amber-focus: rgba(245, 158, 11, 0.5);
   --success: #22c55e;
   --success-border: #16a34a;
   --amber: #f59e0b;
@@ -79,6 +88,29 @@ const showMiniPlayer = computed(() => !isAdminRoute.value && !!audio.currentEpis
   --nav-height: 56px;
   --player-height: 80px;
   --container: 1200px;
+}
+
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-card: #ffffff;
+  --bg-muted: #f4f4f5;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text: #18181b;
+  --text-muted: #71717a;
+  --text-faint: #a1a1aa;
+  --primary: #a855f7;
+  --primary-hover: #9333ea;
+  --primary-light: rgba(168, 85, 247, 0.12);
+  --primary-light2: rgba(168, 85, 247, 0.06);
+  --success: #22c55e;
+  --success-border: #16a34a;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --gradient-premium: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 * {

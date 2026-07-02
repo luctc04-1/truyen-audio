@@ -6,21 +6,53 @@
         <UserNameRow :user="post.user" :tag-label="post.tag_label" />
         <div class="post-time">{{ formatRelativeTime(post.created_at) }}</div>
       </div>
+
+      <div v-if="isOwner" class="post-menu" v-click-outside="closeMenu">
+        <button type="button" class="menu-trigger" :class="{ active: menuOpen }" @click.stop="menuOpen = !menuOpen">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+        <Transition name="menu-pop">
+          <div v-if="menuOpen" class="menu-dropdown">
+            <button type="button" class="menu-item" @click="startEdit">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
+              Chỉnh sửa
+            </button>
+            <button type="button" class="menu-item danger" @click="showDeleteConfirm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              Xóa bài viết
+            </button>
+          </div>
+        </Transition>
+      </div>
     </div>
 
-    <p class="post-body">{{ post.content }}</p>
-
-    <router-link v-if="post.series" :to="`/story/${post.series.id}`" class="series-attach">
-      <img
-        :src="post.series.cover_url || post.series.image || SERIES_FALLBACK_COVER"
-        :alt="post.series.title"
-        class="series-cover"
-      />
-      <div class="series-info">
-        <span class="series-label">Truyện đính kèm</span>
-        <span class="series-title">{{ post.series.title }}</span>
+    <!-- Edit mode -->
+    <div v-if="editing" class="edit-box">
+      <textarea v-model="editContent" maxlength="5000" :disabled="editSaving" rows="4"></textarea>
+      <div class="edit-actions">
+        <button type="button" class="btn btn-outline btn-sm" :disabled="editSaving" @click="cancelEdit">Huỷ</button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          :disabled="!editContent.trim() || editSaving"
+          @click="saveEdit"
+        >
+          <ButtonSpinner v-if="editSaving" variant="light" :size="13" />
+          <span v-else>Lưu</span>
+        </button>
       </div>
-    </router-link>
+    </div>
+
+    <template v-else>
+      <p class="post-body">{{ post.content }}</p>
+      <router-link v-if="post.series" :to="`/story/${post.series.id}`" class="series-attach">
+        <img :src="post.series.cover_url || post.series.image || SERIES_FALLBACK_COVER" :alt="post.series.title" class="series-cover" />
+        <div class="series-info">
+          <span class="series-label">Truyện đính kèm</span>
+          <span class="series-title">{{ post.series.title }}</span>
+        </div>
+      </router-link>
+    </template>
 
     <div class="post-actions">
       <button
@@ -48,64 +80,52 @@
             <div v-for="comment in comments" :key="comment.id" class="comment-thread">
               <CommunityCommentItem
                 :comment="comment"
-                :is-replying="replyingTo === comment.id"
+                :replying-to="replyingTo"
                 @like="$emit('comment-like', $event)"
                 @reply="$emit('reply', $event)"
+                @comment-updated="$emit('comment-updated', $event)"
+                @comment-deleted="$emit('comment-deleted', $event)"
               />
-
-              <Transition name="reply-slide">
-                <div v-if="replyingTo === comment.id" class="reply-compose">
-                  <textarea
-                    ref="replyTextareaEl"
-                    :value="replyDraft"
-                    placeholder="Nhập phản hồi của bạn..."
-                    maxlength="1000"
-                    rows="2"
-                    :disabled="commentSubmitting"
-                    @input="$emit('update:replyDraft', $event.target.value)"
-                    @keydown.escape.prevent="$emit('cancel-reply')"
-                  ></textarea>
-                  <div class="reply-actions">
-                    <button type="button" class="btn btn-outline btn-sm" :disabled="commentSubmitting" @click="$emit('cancel-reply')">Huỷ</button>
-                    <button
-                      type="button"
-                      class="btn btn-primary btn-sm"
-                      :disabled="!replyDraft?.trim() || commentSubmitting"
-                      @click="$emit('submit-reply', comment)"
-                    >
-                      <ButtonSpinner v-if="commentSubmitting" variant="light" :size="13" />
-                      Gửi phản hồi
-                    </button>
-                  </div>
-                </div>
-              </Transition>
             </div>
           </div>
-
           <div v-else class="comments-empty">Chưa có bình luận</div>
         </template>
 
         <div v-if="auth.isAuthenticated" class="comment-compose-bottom">
-          <textarea
-            :value="commentDraft"
-            placeholder="Viết bình luận..."
-            maxlength="1000"
-            rows="2"
-            :disabled="commentSubmitting"
-            @input="$emit('update:commentDraft', $event.target.value)"
-          ></textarea>
-          <button
-            type="button"
-            class="send-btn"
-            :disabled="!commentDraft?.trim() || commentSubmitting"
-            title="Gửi bình luận"
-            @click="$emit('submit-comment', post)"
-          >
-            <ButtonSpinner v-if="commentSubmitting" variant="light" :size="16" />
-            <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>
-            </svg>
-          </button>
+          <Transition name="reply-bar">
+            <div v-if="replyingToComment" class="reply-indicator-bar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 14 4 9l5-5"/><path d="M4 9h10a4 4 0 0 1 4 4v7"/>
+              </svg>
+              <span>Đang trả lời bình luận</span>
+              <button type="button" class="reply-indicator-close" @click="$emit('cancel-reply')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+          </Transition>
+          <div class="compose-row" :class="{ 'is-replying': replyingToComment }">
+            <textarea
+              ref="commentTextareaEl"
+              :value="commentDraft"
+              :placeholder="replyingToComment ? 'Nhập phản hồi...' : 'Viết bình luận...'"
+              maxlength="1000"
+              rows="1"
+              :disabled="commentSubmitting"
+              @input="$emit('update:commentDraft', $event.target.value)"
+            ></textarea>
+            <button
+              type="button"
+              class="send-btn"
+              :disabled="!commentDraft?.trim() || commentSubmitting"
+              title="Gửi"
+              @click="$emit('submit-comment', post)"
+            >
+              <ButtonSpinner v-if="commentSubmitting" variant="light" :size="16" />
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <p v-else class="comment-login-hint">
           <button type="button" class="link-btn" @click="$emit('go-auth')">Đăng nhập</button> để bình luận
@@ -113,18 +133,33 @@
       </div>
     </Transition>
   </div>
+
+  <ConfirmDialog
+    v-model="confirmingDelete"
+    :auto-close="false"
+    :confirm-loading="deleting"
+    variant="danger"
+    title="Xóa bài viết"
+    message="Bạn có chắc muốn xóa bài viết này? Hành động này không thể hoàn tác."
+    confirm-text="Xóa"
+    cancel-text="Huỷ"
+    @confirm="executeDelete"
+  />
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useToastStore } from '@/stores/toastStore'
 import { formatRelativeTime, SERIES_FALLBACK_COVER } from '@/utils/helpers'
 import { useLikePop } from '@/composables/useLikePop'
+import CommunityService from '@/services/CommunityService'
 import UserAvatar from '@/components/UserAvatar.vue'
 import UserNameRow from '@/components/UserNameRow.vue'
 import CommunityCommentItem from '@/components/CommunityCommentItem.vue'
 import CommunityCommentSkeleton from '@/components/CommunityCommentSkeleton.vue'
 import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const props = defineProps({
   post: { type: Object, required: true },
@@ -132,8 +167,8 @@ const props = defineProps({
   comments: { type: Array, default: () => [] },
   commentsLoading: { type: Boolean, default: false },
   commentDraft: { type: String, default: '' },
-  replyDraft: { type: String, default: '' },
   replyingTo: { type: String, default: null },
+  replyingToComment: { type: Object, default: null },
   commentSubmitting: { type: Boolean, default: false },
 })
 
@@ -143,32 +178,107 @@ const emit = defineEmits([
   'comment-like',
   'reply',
   'cancel-reply',
-  'submit-reply',
   'submit-comment',
   'update:commentDraft',
-  'update:replyDraft',
   'go-auth',
+  'post-updated',
+  'post-deleted',
+  'comment-updated',
+  'comment-deleted',
 ])
 
 const auth = useAuthStore()
+const toast = useToastStore()
 const { likePop, triggerLikePop } = useLikePop()
-const replyTextareaEl = ref(null)
+
+const isOwner = computed(() => auth.isAuthenticated && auth.user?.id === props.post.user?.id)
+
+// ── Auto-focus textarea khi chuyển sang reply mode
+const commentTextareaEl = ref(null)
+
+watch(() => props.replyingToComment, async (val) => {
+  if (!val) return
+  await nextTick()
+  commentTextareaEl.value?.focus()
+})
+
+// ── Menu
+const menuOpen = ref(false)
+const closeMenu = () => { menuOpen.value = false }
+
+// ── Edit
+const editing = ref(false)
+const editContent = ref('')
+const editSaving = ref(false)
+
+const startEdit = () => {
+  editContent.value = props.post.content
+  editing.value = true
+  menuOpen.value = false
+}
+
+const cancelEdit = () => {
+  editing.value = false
+  editContent.value = ''
+}
+
+const saveEdit = async () => {
+  if (!editContent.value.trim() || editSaving.value) return
+  editSaving.value = true
+  try {
+    const updated = await CommunityService.updatePost(props.post.id, {
+      content: editContent.value.trim(),
+      tag: props.post.tag,
+      series_id: props.post.series?.id ?? null,
+    })
+    emit('post-updated', updated)
+    editing.value = false
+    toast.success('Đã chỉnh sửa bài viết')
+  } catch (error) {
+    toast.error(error.message || 'Chỉnh sửa thất bại')
+  } finally {
+    editSaving.value = false
+  }
+}
+
+// ── Delete
+const confirmingDelete = ref(false)
+const deleting = ref(false)
+
+const showDeleteConfirm = () => {
+  menuOpen.value = false
+  confirmingDelete.value = true
+}
+
+const executeDelete = async () => {
+  if (deleting.value) return
+  deleting.value = true
+  try {
+    await CommunityService.deletePost(props.post.id)
+    confirmingDelete.value = false
+    emit('post-deleted', props.post.id)
+    toast.success('Đã xóa bài viết')
+  } catch (error) {
+    toast.error(error.message || 'Xóa thất bại')
+  } finally {
+    deleting.value = false
+  }
+}
 
 const onLikeClick = () => {
   triggerLikePop(() => emit('like', props.post))
 }
 
-const focusReplyTextarea = () => {
-  const el = replyTextareaEl.value
-  const target = Array.isArray(el) ? el.find(Boolean) : el
-  target?.focus()
+// Directive đóng menu khi click ra ngoài
+const vClickOutside = {
+  mounted(el, binding) {
+    el._clickOutsideHandler = (e) => { if (!el.contains(e.target)) binding.value() }
+    document.addEventListener('mousedown', el._clickOutsideHandler)
+  },
+  unmounted(el) {
+    document.removeEventListener('mousedown', el._clickOutsideHandler)
+  },
 }
-
-watch(() => props.replyingTo, async (id) => {
-  if (!id) return
-  await nextTick()
-  focusReplyTextarea()
-})
 </script>
 
 <style scoped>
@@ -200,6 +310,90 @@ watch(() => props.replyingTo, async (id) => {
   word-break: break-word;
 }
 
+/* ── Menu ── */
+.post-menu { position: relative; flex-shrink: 0; }
+
+.menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.menu-trigger:hover,
+.menu-trigger.active { background: var(--bg-muted); color: var(--text); }
+
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 160px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.menu-item:hover { background: var(--bg-muted); }
+.menu-item.danger { color: var(--red, #ef4444); }
+.menu-item.danger:hover { background: rgba(239,68,68,0.08); }
+
+.menu-pop-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.menu-pop-leave-active { transition: opacity 0.1s ease, transform 0.1s ease; }
+.menu-pop-enter-from, .menu-pop-leave-to { opacity: 0; transform: translateY(-6px) scale(0.96); }
+
+/* ── Inline edit ── */
+.edit-box { margin-bottom: 12px; }
+
+.edit-box textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--primary-border);
+  background: var(--bg-muted);
+  color: var(--text);
+  font-size: 15px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.edit-box textarea:focus { outline: none; }
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* ── Series attach ── */
 .series-attach {
   display: flex;
   align-items: center;
@@ -214,19 +408,12 @@ watch(() => props.replyingTo, async (id) => {
 }
 
 .series-attach:hover { border-color: var(--primary); }
-
-.series-cover {
-  width: 44px;
-  height: 60px;
-  border-radius: 6px;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
+.series-cover { width: 44px; height: 60px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
 .series-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .series-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
 .series-title { font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ── Post actions ── */
 .post-actions {
   display: flex;
   gap: 16px;
@@ -248,20 +435,13 @@ watch(() => props.replyingTo, async (id) => {
   font-family: inherit;
 }
 
-.post-action svg {
-  width: 18px;
-  height: 18px;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.post-action.like.popping svg {
-  transform: scale(1.28);
-}
-
+.post-action svg { width: 18px; height: 18px; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.post-action.like.popping svg { transform: scale(1.28); }
 .post-action:hover { color: var(--text); }
 .post-action.like:hover { color: var(--red); }
 .post-action.like.liked { color: var(--red); }
 
+/* ── Comments ── */
 .post-comments {
   margin-top: 12px;
   padding-top: 12px;
@@ -269,73 +449,61 @@ watch(() => props.replyingTo, async (id) => {
   transform-origin: top center;
 }
 
-.comments-expand-enter-active {
-  transition: opacity 0.22s ease, transform 0.22s ease;
-}
-
-.comments-expand-leave-active {
-  transition: opacity 0.16s ease, transform 0.16s ease;
-}
-
-.comments-expand-enter-from,
-.comments-expand-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.reply-slide-enter-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.reply-slide-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.reply-slide-enter-from,
-.reply-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
+.comments-expand-enter-active { transition: opacity 0.22s ease, transform 0.22s ease; }
+.comments-expand-leave-active { transition: opacity 0.16s ease, transform 0.16s ease; }
+.comments-expand-enter-from, .comments-expand-leave-to { opacity: 0; transform: translateY(-8px); }
 
 .comment-list { margin-bottom: 12px; }
 .comment-thread + .comment-thread { border-top: 1px solid var(--border); }
 
-.reply-compose {
-  margin: 4px 0 8px 48px;
-  overflow: hidden;
-}
-
-.reply-compose textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--bg-muted);
-  color: var(--text);
-  font-size: 14px;
-  resize: none;
-  font-family: inherit;
-  margin-bottom: 8px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.reply-compose textarea:focus {
-  outline: none;
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
-}
-
-.reply-actions { display: flex; gap: 8px; justify-content: flex-end; }
-
 .comment-compose-bottom {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
 }
 
-.comment-compose-bottom textarea {
+/* ── Reply indicator bar ── */
+.reply-indicator-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  color: var(--amber, #f59e0b);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.reply-indicator-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--amber, #f59e0b);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+  padding: 0;
+}
+
+.reply-indicator-close:hover { opacity: 1; background: rgba(245, 158, 11, 0.12); }
+
+.reply-bar-enter-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+.reply-bar-leave-active { transition: opacity 0.12s ease, transform 0.12s ease; }
+.reply-bar-enter-from, .reply-bar-leave-to { opacity: 0; transform: translateY(-4px); }
+
+/* ── Compose row ── */
+.compose-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.compose-row textarea {
   flex: 1;
   padding: 12px 14px;
   border-radius: var(--radius-md);
@@ -346,11 +514,19 @@ watch(() => props.replyingTo, async (id) => {
   resize: none;
   font-family: inherit;
   min-height: 44px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.comment-compose-bottom textarea:focus {
-  outline: none;
-  border-color: rgba(168, 85, 247, 0.5);
+.compose-row textarea:focus { outline: none; border-color: var(--primary-focus); }
+
+.compose-row.is-replying textarea {
+  border-color: var(--amber-focus);
+  box-shadow: 0 0 0 3px var(--amber-light);
+}
+
+.compose-row.is-replying textarea:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-ring);
 }
 
 .send-btn {
@@ -371,25 +547,9 @@ watch(() => props.replyingTo, async (id) => {
 .send-btn:hover:not(:disabled) { opacity: 0.9; }
 .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.comments-loading {
-  padding: 4px 0 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.comments-empty {
-  font-size: 13px;
-  color: var(--text-muted);
-  padding: 8px 0 12px;
-}
-
-.comment-login-hint {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 12px 0 0;
-  text-align: center;
-}
+.comments-loading { padding: 4px 0 12px; display: flex; flex-direction: column; gap: 8px; }
+.comments-empty { font-size: 13px; color: var(--text-muted); padding: 8px 0 12px; }
+.comment-login-hint { font-size: 13px; color: var(--text-muted); margin: 12px 0 0; text-align: center; }
 
 .link-btn {
   background: none;
@@ -401,6 +561,7 @@ watch(() => props.replyingTo, async (id) => {
   text-decoration: underline;
 }
 
+/* ── Buttons ── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -410,27 +571,14 @@ watch(() => props.replyingTo, async (id) => {
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
+  transition: opacity 0.15s, background 0.15s;
 }
 
-.btn-primary {
-  background: var(--gradient-premium);
-  color: #fff;
-  border: none;
-  height: 34px;
-  padding: 0 14px;
-  font-size: 13px;
-}
-
+.btn-primary { background: var(--gradient-premium); color: #fff; border: none; height: 34px; padding: 0 14px; font-size: 13px; }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.btn-outline {
-  background: transparent;
-  border: 1px solid var(--border-strong);
-  color: var(--text);
-  height: 34px;
-  padding: 0 14px;
-  font-size: 13px;
-}
-
+.btn-outline { background: transparent; border: 1px solid var(--border-strong); color: var(--text); height: 34px; padding: 0 14px; font-size: 13px; }
 .btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-sm { height: 32px; padding: 0 12px; font-size: 12px; }
 </style>

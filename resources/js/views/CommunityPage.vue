@@ -130,19 +130,21 @@
           :comments="postComments[post.id] || []"
           :comments-loading="!!commentsLoading[post.id]"
           :comment-draft="commentDrafts[post.id] || ''"
-          :reply-draft="replyDraft"
           :replying-to="replyingTo"
+          :replying-to-comment="expandedPostId === post.id ? replyingToComment : null"
           :comment-submitting="!!commentSubmitting[post.id]"
           @like="toggleLike"
           @toggle-comments="toggleComments"
           @comment-like="toggleCommentLike"
           @reply="startReply"
           @cancel-reply="cancelReply"
-          @submit-reply="submitReply"
           @submit-comment="submitComment"
           @update:comment-draft="commentDrafts[post.id] = $event"
-          @update:reply-draft="replyDraft = $event"
           @go-auth="goAuth"
+          @post-updated="onPostUpdated"
+          @post-deleted="onPostDeleted"
+          @comment-updated="onCommentUpdated"
+          @comment-deleted="onCommentDeleted"
         />
         <template v-if="loadingMore">
           <CommunityPostSkeleton v-for="n in 2" :key="'more-' + n" />
@@ -239,8 +241,8 @@ const postComments = reactive({})
 const commentsLoading = reactive({})
 const commentDrafts = reactive({})
 const commentSubmitting = reactive({})
-const replyingTo = ref(null)
-const replyDraft = ref('')
+const replyingTo = ref(null)        // comment id — cho CommentItem active state
+const replyingToComment = ref(null) // full object — cho PostCard indicator bar
 const likingPostIds = reactive(new Set())
 const likingCommentIds = reactive(new Set())
 
@@ -524,12 +526,43 @@ const startReply = (comment) => {
     return
   }
   replyingTo.value = comment.id
-  replyDraft.value = ''
+  replyingToComment.value = comment
+
+  // Pre-fill @username vào ô compose của post đang mở
+  const postId = expandedPostId.value
+  if (postId) {
+    const username = comment.user?.username || ''
+    commentDrafts[postId] = `@${username} `
+  }
 }
 
 const cancelReply = () => {
+  const postId = expandedPostId.value
+  if (postId && replyingToComment.value) {
+    const username = replyingToComment.value.user?.username || ''
+    const prefix = `@${username} `
+    if (commentDrafts[postId] === prefix || commentDrafts[postId]?.startsWith(prefix)) {
+      commentDrafts[postId] = commentDrafts[postId].slice(prefix.length)
+    }
+  }
   replyingTo.value = null
-  replyDraft.value = ''
+  replyingToComment.value = null
+}
+
+const escapeHtml = (str) => str
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+
+const buildReplyContent = (draft, comment) => {
+  const username = comment.user?.username || ''
+  const prefix = `@${username}`
+  if (draft.startsWith(prefix)) {
+    const mentionHtml = `<span class="mention">@${escapeHtml(username)}</span>`
+    const rest = draft.slice(prefix.length).trim()
+    return rest ? `${mentionHtml} ${escapeHtml(rest)}` : mentionHtml
+  }
+  return escapeHtml(draft)
 }
 
 const submitPostComment = async (postId, content, parent = null) => {
@@ -537,20 +570,22 @@ const submitPostComment = async (postId, content, parent = null) => {
 
   commentSubmitting[postId] = true
   try {
-    const created = await CommunityService.submitComment(postId, content, parent?.id ?? null)
+    const newComment = await CommunityService.submitComment(postId, content, parent?.id ?? null)
 
     if (parent) {
-      const target = postComments[postId]?.find((c) => c.id === parent.id)
-      if (target) {
-        target.replies = [...(target.replies || []), created]
+      const parentComment = findNestedComment(postComments[postId], parent.id)
+      if (parentComment) {
+        if (!parentComment.replies) parentComment.replies = []
+        parentComment.replies.push(newComment)
       }
-      replyDraft.value = ''
-      replyingTo.value = null
     } else {
       if (!postComments[postId]) postComments[postId] = []
-      postComments[postId].push(created)
-      commentDrafts[postId] = ''
+      postComments[postId] = [...postComments[postId], newComment]
     }
+
+    replyingTo.value = null
+    replyingToComment.value = null
+    commentDrafts[postId] = ''
 
     const post = posts.value.find((p) => p.id === postId)
     if (post) post.comment_count += 1
@@ -562,13 +597,54 @@ const submitPostComment = async (postId, content, parent = null) => {
 }
 
 const submitComment = (post) => {
-  submitPostComment(post.id, commentDrafts[post.id]?.trim())
+  const raw = commentDrafts[post.id]?.trim()
+  if (!raw) return
+
+  let content = raw
+  let parent = null
+
+  if (replyingToComment.value) {
+    parent = replyingToComment.value
+    content = buildReplyContent(raw, parent)
+  }
+
+  submitPostComment(post.id, content, parent)
 }
 
-const submitReply = (parent) => {
+// ── Handlers nhận kết quả từ PostCard / CommentItem ─────────────────────────
+
+const onPostUpdated = (updatedPost) => {
+  const idx = posts.value.findIndex((p) => p.id === updatedPost.id)
+  if (idx !== -1) Object.assign(posts.value[idx], updatedPost)
+}
+
+const onPostDeleted = (postId) => {
+  posts.value = posts.value.filter((p) => p.id !== postId)
+  if (expandedPostId.value === postId) expandedPostId.value = null
+}
+
+const removeNestedComment = (list, id) => {
+  const idx = list.findIndex((c) => c.id === id)
+  if (idx !== -1) { list.splice(idx, 1); return true }
+  for (const item of list) {
+    if (removeNestedComment(item.replies || [], id)) return true
+  }
+  return false
+}
+
+const onCommentUpdated = ({ id, content }) => {
   const postId = expandedPostId.value
   if (!postId) return
-  submitPostComment(postId, replyDraft.value.trim(), parent)
+  const target = findNestedComment(postComments[postId], id)
+  if (target) target.content = content
+}
+
+const onCommentDeleted = (comment) => {
+  const postId = expandedPostId.value
+  if (!postId) return
+  removeNestedComment(postComments[postId], comment.id)
+  const post = posts.value.find((p) => p.id === postId)
+  if (post && post.comment_count > 0) post.comment_count -= 1
 }
 
 const pickSeries = (story) => {
@@ -644,8 +720,8 @@ onMounted(() => loadPosts())
 }
 .series-search-wrap input:focus {
   outline: none;
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
+  border-color: var(--primary-focus);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 .series-search-spinner {
   position: absolute;
@@ -667,7 +743,7 @@ onMounted(() => loadPosts())
 .selected-series {
   display: flex; align-items: center; gap: 12px;
   margin-top: 8px; padding: 10px 12px; border-radius: var(--radius-sm);
-  background: var(--primary-light); border: 1px solid rgba(168, 85, 247, 0.2);
+  background: var(--primary-light); border: 1px solid var(--primary-light-border);
 }
 .selected-cover { width: 40px; height: 54px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
 .selected-title { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

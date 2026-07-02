@@ -2,11 +2,15 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { canPlayEpisode } from '@/utils/access'
+import AuthService from '@/services/AuthService'
 
 // Một instance Audio duy nhất cho toàn app (không đưa vào reactive state).
 let audio = null
 
 const SPEEDS = [1, 1.3, 1.5, 2.0, 3.0]
+
+// Các mốc phần trăm sẽ trigger lưu tiến trình
+const SAVE_MILESTONES = [25, 50, 75, 100]
 
 export const useAudioStore = defineStore('audio', () => {
   const currentStory = ref(null)
@@ -26,6 +30,41 @@ export const useAudioStore = defineStore('audio', () => {
   let sleepHandle = null
   const SLEEP_OPTIONS = [0, 5, 10, 15, 30, 45, 60]
 
+  // ─── Progress saving ─────────────────────────────────────────────────────
+  // Tập hợp các mốc đã lưu cho tập hiện tại (reset khi đổi tập)
+  const _savedMilestones = new Set()
+
+  const _saveProgress = (completed = false) => {
+    const auth = useAuthStore()
+    if (!auth.isAuthenticated) return
+    const ep = currentEpisode.value
+    if (!ep?.id) return
+    const listened = Math.floor(audio?.currentTime ?? currentTime.value)
+    if (!completed && listened < 3) return
+
+    AuthService.recordProgress({
+      episodeId:       ep.id,
+      listenedSeconds: listened,
+      completed,
+    }).catch(() => {})
+  }
+
+  // Gọi trong timeupdate — kiểm tra xem có vượt mốc nào chưa lưu không
+  const _checkMilestones = () => {
+    const dur = audio?.duration
+    if (!dur || dur <= 0 || !currentEpisode.value) return
+    const pct = (audio.currentTime / dur) * 100
+
+    for (const milestone of SAVE_MILESTONES) {
+      if (pct >= milestone && !_savedMilestones.has(milestone)) {
+        _savedMilestones.add(milestone)
+        _saveProgress(milestone === 100)
+      }
+    }
+  }
+
+  const _resetMilestones = () => _savedMilestones.clear()
+
   const ensureAudio = () => {
     if (audio) return audio
 
@@ -34,6 +73,7 @@ export const useAudioStore = defineStore('audio', () => {
 
     audio.addEventListener('timeupdate', () => {
       currentTime.value = audio.currentTime
+      _checkMilestones()
     })
     audio.addEventListener('loadedmetadata', () => {
       duration.value = audio.duration || currentEpisode.value?.duration_seconds || 0
@@ -43,12 +83,18 @@ export const useAudioStore = defineStore('audio', () => {
         duration.value = audio.duration
       }
     })
-    audio.addEventListener('play', () => { isPlaying.value = true })
-    audio.addEventListener('pause', () => { isPlaying.value = false })
+    audio.addEventListener('play', () => {
+      isPlaying.value = true
+    })
+    audio.addEventListener('pause', () => {
+      isPlaying.value = false
+      _saveProgress(false)
+    })
     audio.addEventListener('waiting', () => { isBuffering.value = true })
     audio.addEventListener('playing', () => { isBuffering.value = false })
     audio.addEventListener('canplay', () => { isBuffering.value = false })
     audio.addEventListener('ended', () => {
+      _saveProgress(true)
       if (stopAfterEpisode.value) {
         stopAfterEpisode.value = false
         isPlaying.value = false
@@ -85,6 +131,13 @@ export const useAudioStore = defineStore('audio', () => {
 
   const _loadSource = (episode, autoplay = true) => {
     const a = ensureAudio()
+
+    // Lưu tiến trình tập hiện tại trước khi chuyển sang tập mới
+    if (currentEpisode.value?.id && episode?.id !== currentEpisode.value.id) {
+      _saveProgress(false)
+      _resetMilestones()
+    }
+
     if (!episode?.audio_url) {
       currentEpisode.value = episode
       return
@@ -203,6 +256,8 @@ export const useAudioStore = defineStore('audio', () => {
   }
 
   const stop = () => {
+    _saveProgress(false)
+    _resetMilestones()
     pause()
     if (audio) {
       audio.removeAttribute('src')
