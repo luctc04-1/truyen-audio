@@ -25,6 +25,26 @@ const AuthService = {
         return ApiService.get('/auth/me');
     },
 
+    updateProfile(data) {
+        return ApiService.patch('/auth/me', data);
+    },
+
+    getHistory() {
+        return ApiService.get('/auth/me/history');
+    },
+
+    getFollowedSeries() {
+        return ApiService.get('/auth/me/follows/series');
+    },
+
+    recordProgress({ episodeId, listenedSeconds, completed = false }) {
+        return ApiService.post('/auth/me/progress', {
+            episode_id:       episodeId,
+            listened_seconds: listenedSeconds,
+            completed,
+        });
+    },
+
     logout() {
         return ApiService.post('/auth/logout');
     },

@@ -73,7 +73,7 @@ class CommunityController extends BaseController
 
     public function toggleLike(Request $request, string $id): JsonResponse
     {
-        $post = CommunityPost::query()->find($id);
+        $post = CommunityPost::query()->withCount('likes')->find($id);
 
         if (! $post) {
             return $this->error('Không tìm thấy bài viết', 404);
@@ -99,7 +99,7 @@ class CommunityController extends BaseController
 
         return $this->success([
             'post_id'     => $post->id,
-            'like_count'  => $post->likes()->count(),
+            'like_count'  => $liked ? $post->likes_count + 1 : max(0, $post->likes_count - 1),
             'liked_by_me' => $liked,
         ], $liked ? 'Đã thích bài viết' : 'Đã bỏ thích');
     }
@@ -112,29 +112,54 @@ class CommunityController extends BaseController
             return $this->error('Không tìm thấy bài viết', 404);
         }
 
-        $user = $request->user();
+        $user    = $request->user();
         $perPage = min((int) $request->input('per_page', 20), 50);
+        $page    = max(1, (int) $request->input('page', 1));
 
-        $query = CommunityPostComment::query()
+        // Fetch all comments for the post in ONE query (flat), build tree in PHP
+        $all = CommunityPostComment::query()
             ->where('post_id', $post->id)
-            ->topLevel()
-            ->with($this->commentEagerLoads($user))
+            ->with('user')
             ->withCount('likes')
-            ->orderBy('created_at');
-
-        if ($user) {
-            $query->withExists([
+            ->when($user, fn ($q) => $q->withExists([
                 'likes as liked_by_me' => fn ($q) => $q->where('user_id', $user->id),
-            ]);
+            ]))
+            ->orderBy('created_at')
+            ->get();
+
+        // Build tree in O(n) using an id→comment map
+        $map = [];
+        foreach ($all as $comment) {
+            $comment->setRelation('replies', collect());
+            $map[$comment->id] = $comment;
         }
 
-        $paginator = $query->paginate($perPage);
+        $topLevel = collect();
+        foreach ($all as $comment) {
+            if ($comment->parent_id === null) {
+                $topLevel->push($comment);
+            } else {
+                $parent = $map[$comment->parent_id] ?? null;
+                if ($parent) {
+                    $parent->replies->push($comment);
+                }
+            }
+        }
+
+        // Paginate top-level in PHP
+        $total = $topLevel->count();
+        $items = $topLevel->forPage($page, $perPage);
 
         return $this->success([
-            'items' => $paginator->getCollection()
+            'items' => $items
                 ->map(fn (CommunityPostComment $comment) => $this->formatComment($comment))
                 ->values(),
-            'pagination' => $this->paginationMeta($paginator),
+            'pagination' => [
+                'current_page' => $page,
+                'last_page'    => max(1, (int) ceil($total / $perPage)),
+                'per_page'     => $perPage,
+                'total'        => $total,
+            ],
         ], 'Danh sách bình luận');
     }
 
@@ -159,7 +184,6 @@ class CommunityController extends BaseController
             if (
                 ! $parent
                 || $parent->post_id !== $post->id
-                || $parent->parent_id !== null
             ) {
                 throw ValidationException::withMessages([
                     'parent_id' => ['Bình luận gốc không hợp lệ.'],
@@ -176,7 +200,11 @@ class CommunityController extends BaseController
             'content'   => trim($data['content']),
         ]);
 
-        $this->hydrateComment($comment, $user, likedByMe: false);
+        // Load only what's needed: a new comment always has 0 likes and no replies
+        $comment->load('user');
+        $comment->likes_count = 0;
+        $comment->setAttribute('liked_by_me', false);
+        $comment->setRelation('replies', collect());
 
         return $this->success(
             $this->formatComment($comment, includeReplies: ! $parentId),
@@ -185,9 +213,108 @@ class CommunityController extends BaseController
         );
     }
 
-    public function toggleCommentLike(Request $request, string $id): JsonResponse
+    public function updatePost(Request $request, string $id): JsonResponse
+    {
+        $post = CommunityPost::query()->find($id);
+
+        if (! $post) {
+            return $this->error('Không tìm thấy bài viết', 404);
+        }
+
+        $user = $request->user();
+
+        if ($post->user_id !== $user->id) {
+            return $this->error('Bạn không có quyền chỉnh sửa bài viết này', 403);
+        }
+
+        $data = $request->validate([
+            'content'   => 'required|string|min:1|max:5000',
+            'tag'       => ['required', 'string', Rule::in(array_keys(CommunityPost::TAGS))],
+            'series_id' => 'nullable|uuid|exists:series,id',
+        ]);
+
+        $post->update([
+            'content'   => trim($data['content']),
+            'tag'       => $data['tag'],
+            'series_id' => $data['series_id'] ?? null,
+        ]);
+
+        return $this->success(
+            $this->formatPost($post),
+            'Chỉnh sửa bài viết thành công'
+        );
+    }
+
+    public function destroyPost(Request $request, string $id): JsonResponse
+    {
+        $post = CommunityPost::query()->find($id);
+
+        if (! $post) {
+            return $this->error('Không tìm thấy bài viết', 404);
+        }
+
+        $user = $request->user();
+
+        if ($post->user_id !== $user->id) {
+            return $this->error('Bạn không có quyền xóa bài viết này', 403);
+        }
+
+        $post->delete();
+
+        return $this->success(null, 'Đã xóa bài viết');
+    }
+
+    public function updateComment(Request $request, string $id): JsonResponse
     {
         $comment = CommunityPostComment::query()->find($id);
+
+        if (! $comment) {
+            return $this->error('Không tìm thấy bình luận', 404);
+        }
+
+        $user = $request->user();
+
+        if ($comment->user_id !== $user->id) {
+            return $this->error('Bạn không có quyền chỉnh sửa bình luận này', 403);
+        }
+
+        $data = $request->validate([
+            'content' => 'required|string|min:1|max:1000',
+        ]);
+
+        $comment->update(['content' => trim($data['content'])]);
+
+        return $this->success([
+            'id'      => $comment->id,
+            'content' => $comment->content,
+        ], 'Chỉnh sửa bình luận thành công');
+    }
+
+    public function destroyComment(Request $request, string $id): JsonResponse
+    {
+        $comment = CommunityPostComment::query()->find($id);
+
+        if (! $comment) {
+            return $this->error('Không tìm thấy bình luận', 404);
+        }
+
+        $user = $request->user();
+
+        if ($comment->user_id !== $user->id) {
+            return $this->error('Bạn không có quyền xóa bình luận này', 403);
+        }
+
+        $isTopLevel = $comment->parent_id === null;
+        $comment->delete();
+
+        return $this->success([
+            'is_top_level' => $isTopLevel,
+        ], 'Đã xóa bình luận');
+    }
+
+    public function toggleCommentLike(Request $request, string $id): JsonResponse
+    {
+        $comment = CommunityPostComment::query()->withCount('likes')->find($id);
 
         if (! $comment) {
             return $this->error('Không tìm thấy bình luận', 404);
@@ -213,7 +340,7 @@ class CommunityController extends BaseController
 
         return $this->success([
             'comment_id'  => $comment->id,
-            'like_count'  => $comment->likes()->count(),
+            'like_count'  => $liked ? $comment->likes_count + 1 : max(0, $comment->likes_count - 1),
             'liked_by_me' => $liked,
         ], $liked ? 'Đã thích bình luận' : 'Đã bỏ thích');
     }
@@ -232,39 +359,6 @@ class CommunityController extends BaseController
         $post->loadExists([
             'likes as liked_by_me' => fn ($q) => $q->where('user_id', $user->id),
         ]);
-    }
-
-    private function hydrateComment(CommunityPostComment $comment, User $user, ?bool $likedByMe = null): void
-    {
-        $comment->load($this->commentEagerLoads($user));
-        $comment->loadCount('likes');
-
-        if ($likedByMe !== null) {
-            $comment->setAttribute('liked_by_me', $likedByMe);
-
-            return;
-        }
-
-        $comment->loadExists([
-            'likes as liked_by_me' => fn ($q) => $q->where('user_id', $user->id),
-        ]);
-    }
-
-    /** @return array<string, mixed> */
-    private function commentEagerLoads(?User $user): array
-    {
-        return [
-            'user',
-            'replies' => function ($query) use ($user) {
-                $query->with('user')->withCount('likes')->orderBy('created_at');
-
-                if ($user) {
-                    $query->withExists([
-                        'likes as liked_by_me' => fn ($q) => $q->where('user_id', $user->id),
-                    ]);
-                }
-            },
-        ];
     }
 
     private function formatPost(CommunityPost $post): array
@@ -312,7 +406,7 @@ class CommunityController extends BaseController
 
         if ($includeReplies && $comment->relationLoaded('replies')) {
             $data['replies'] = $comment->replies
-                ->map(fn (CommunityPostComment $reply) => $this->formatComment($reply, includeReplies: false))
+                ->map(fn (CommunityPostComment $reply) => $this->formatComment($reply, includeReplies: true))
                 ->values()
                 ->all();
         }

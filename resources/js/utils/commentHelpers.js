@@ -1,11 +1,11 @@
 /**
- * Tìm bình luận (hoặc reply) trong danh sách lồng nhau.
+ * Tìm bình luận (hoặc reply) trong danh sách lồng nhau (đệ quy toàn cây).
  */
 export const findNestedComment = (list, id) => {
     for (const item of list || []) {
         if (item.id === id) return item;
-        const reply = (item.replies || []).find((r) => r.id === id);
-        if (reply) return reply;
+        const found = findNestedComment(item.replies, id);
+        if (found) return found;
     }
     return null;
 };

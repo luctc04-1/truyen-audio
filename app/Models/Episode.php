@@ -17,7 +17,6 @@ class Episode extends Model
     protected $fillable = [
         'id',
         'series_id',
-        'source_episode_id',
         'title',
         'episode_number',
         'duration_seconds',

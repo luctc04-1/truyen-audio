@@ -21,6 +21,33 @@ class FavoriteController extends BaseController
         return $this->success(['ids' => $ids], 'Danh sách theo dõi');
     }
 
+    public function indexWithSeries(Request $request): JsonResponse
+    {
+        $items = Favorite::query()
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('created_at')
+            ->with(['series:id,title,cover_url,narrator,author,is_complete,total_episodes,latest_episode_number,average_rating'])
+            ->get()
+            ->map(fn ($fav) => [
+                'id'                    => $fav->series?->id,
+                'title'                 => $fav->series?->title,
+                'cover_url'             => $fav->series?->cover_url,
+                'narrator'              => $fav->series?->narrator,
+                'author'                => $fav->series?->author,
+                'is_complete'           => $fav->series?->is_complete,
+                'total_episodes'        => $fav->series?->total_episodes,
+                'latest_episode_number' => $fav->series?->latest_episode_number,
+                'average_rating'        => $fav->series?->average_rating
+                    ? round((float) $fav->series->average_rating, 1)
+                    : null,
+                'followed_at'           => $fav->created_at?->format('d/m/Y'),
+            ])
+            ->filter(fn ($s) => $s['id'] !== null)
+            ->values();
+
+        return $this->success(['items' => $items], 'Truyện đang theo dõi');
+    }
+
     public function toggle(Request $request, string $seriesId): JsonResponse
     {
         if (! Series::whereKey($seriesId)->exists()) {

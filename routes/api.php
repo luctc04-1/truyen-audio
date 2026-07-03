@@ -62,8 +62,12 @@ Route::middleware('jwt.optional')->prefix('community')->group(function () {
 
 Route::middleware('jwt.auth')->prefix('community')->group(function () {
     Route::post('/posts', [CommunityController::class, 'store']);
+    Route::patch('/posts/{id}', [CommunityController::class, 'updatePost']);
+    Route::delete('/posts/{id}', [CommunityController::class, 'destroyPost']);
     Route::post('/posts/{id}/like', [CommunityController::class, 'toggleLike']);
     Route::post('/posts/{id}/comments', [CommunityController::class, 'storeComment']);
+    Route::patch('/community-comments/{id}', [CommunityController::class, 'updateComment']);
+    Route::delete('/community-comments/{id}', [CommunityController::class, 'destroyComment']);
     Route::post('/community-comments/{id}/like', [CommunityController::class, 'toggleCommentLike']);
 });
 
@@ -75,8 +79,12 @@ Route::prefix('auth')->group(function () {
 
     Route::middleware('jwt.auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
+        Route::patch('/me', [AuthController::class, 'update']);
+        Route::get('/me/history', [AuthController::class, 'history']);
+        Route::post('/me/progress', [AuthController::class, 'recordProgress']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me/follows', [FavoriteController::class, 'index']);
+        Route::get('/me/follows/series', [FavoriteController::class, 'indexWithSeries']);
     });
 });
 

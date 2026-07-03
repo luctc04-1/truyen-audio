@@ -12,6 +12,24 @@ class CommunityService {
         return ApiService.post('/community/posts', payload).then(extractApiPayload);
     }
 
+    updatePost(postId, { content, tag, series_id = null }) {
+        const payload = { content, tag };
+        if (series_id) payload.series_id = series_id;
+        return ApiService.patch(`/community/posts/${postId}`, payload).then(extractApiPayload);
+    }
+
+    deletePost(postId) {
+        return ApiService.delete(`/community/posts/${postId}`);
+    }
+
+    updateComment(commentId, content) {
+        return ApiService.patch(`/community/community-comments/${commentId}`, { content }).then(extractApiPayload);
+    }
+
+    deleteComment(commentId) {
+        return ApiService.delete(`/community/community-comments/${commentId}`);
+    }
+
     toggleLike(postId) {
         return ApiService.post(`/community/posts/${postId}/like`).then(extractApiPayload);
     }
