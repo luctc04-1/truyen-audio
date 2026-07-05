@@ -1,7 +1,19 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Modules\Admin\Controllers\CategoryAdminController;
+use App\Modules\Admin\Controllers\CommentAdminController;
+use App\Modules\Admin\Controllers\CommunityAdminController;
+use App\Modules\Admin\Controllers\DashboardController;
+use App\Modules\Admin\Controllers\EpisodeAdminController;
+use App\Modules\Admin\Controllers\JobAdminController;
+use App\Modules\Admin\Controllers\OrderAdminController;
+use App\Modules\Admin\Controllers\PlanAdminController;
+use App\Modules\Admin\Controllers\RatingAdminController;
+use App\Modules\Admin\Controllers\SeriesAdminController;
+use App\Modules\Admin\Controllers\SettingsAdminController;
 use App\Modules\Admin\Controllers\SyncController;
+use App\Modules\Admin\Controllers\UserAdminController;
 use App\Modules\Auth\Controllers\AuthController;
 use App\Modules\Community\Controllers\CommunityController;
 use App\Modules\Payment\Controllers\OrderController;
@@ -40,19 +52,20 @@ Route::middleware('jwt.optional')->group(function () {
 
 // ─── Public: Gói VIP ─────────────────────────────────────────────────────
 Route::get('/plans', [PlanController::class, 'index']);
+Route::get('/config', [SettingsAdminController::class, 'publicConfig']);
 
 // ─── PayOS webhook (public) ──────────────────────────────────────────────
 Route::post('/webhooks/payos', [PayOsWebhookController::class, 'handle']);
 
-// ─── Đơn hàng VIP (yêu cầu đăng nhập) ────────────────────────────────────
-Route::middleware('jwt.auth')->prefix('orders')->group(function () {
+// ─── Đơn hàng VIP (client — yêu cầu đăng nhập) ─────────────────────────
+Route::middleware('jwt.client')->prefix('orders')->group(function () {
     Route::post('/', [OrderController::class, 'store']);
     Route::get('/{orderCode}', [OrderController::class, 'show'])->whereNumber('orderCode');
 });
 
 // ─── Pusher auth (JWT) ───────────────────────────────────────────────────
 Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate'])
-    ->middleware('jwt.auth');
+    ->middleware('jwt.client');
 
 // ─── Cộng đồng (đọc công khai, ghi yêu cầu đăng nhập) ────────────────────
 Route::middleware('jwt.optional')->prefix('community')->group(function () {
@@ -60,7 +73,7 @@ Route::middleware('jwt.optional')->prefix('community')->group(function () {
     Route::get('/posts/{id}/comments', [CommunityController::class, 'comments']);
 });
 
-Route::middleware('jwt.auth')->prefix('community')->group(function () {
+Route::middleware('jwt.client')->prefix('community')->group(function () {
     Route::post('/posts', [CommunityController::class, 'store']);
     Route::patch('/posts/{id}', [CommunityController::class, 'updatePost']);
     Route::delete('/posts/{id}', [CommunityController::class, 'destroyPost']);
@@ -76,8 +89,10 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/google', [AuthController::class, 'google']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
-    Route::middleware('jwt.auth')->group(function () {
+    Route::middleware('jwt.client')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::patch('/me', [AuthController::class, 'update']);
         Route::get('/me/history', [AuthController::class, 'history']);
@@ -88,8 +103,8 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// ─── Đánh giá & bình luận (yêu cầu đăng nhập khi ghi) ───────────────────
-Route::middleware('jwt.auth')->group(function () {
+// ─── Đánh giá & bình luận (client — yêu cầu đăng nhập khi ghi) ──────────
+Route::middleware('jwt.client')->group(function () {
     Route::post('/series/{id}/ratings', [RatingController::class, 'store']);
     Route::post('/series/{id}/comments', [CommentController::class, 'store']);
     Route::post('/series/{id}/follow', [FavoriteController::class, 'toggle']);
@@ -99,18 +114,60 @@ Route::middleware('jwt.auth')->group(function () {
     Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
 });
 
-// ─── Admin: Đồng bộ dữ liệu từ Supabase ──────────────────────────────────
-Route::prefix('admin/sync')->group(function () {
+// ─── Admin (yêu cầu jwt.client + jwt.admin) ──────────────────────────────
+Route::middleware(['jwt.client', 'jwt.admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // Kiểm tra trạng thái DB hiện tại
-    Route::get('status', [SyncController::class, 'status']);
+    Route::get('/series', [SeriesAdminController::class, 'index']);
+    Route::get('/series/{id}', [SeriesAdminController::class, 'show']);
+    Route::post('/series', [SeriesAdminController::class, 'store']);
+    Route::patch('/series/{id}', [SeriesAdminController::class, 'update']);
+    Route::post('/series/{id}/cover', [SeriesAdminController::class, 'uploadCover']);
+    Route::delete('/series/{id}', [SeriesAdminController::class, 'destroy']);
 
-    // Sync chỉ series
-    Route::post('series', [SyncController::class, 'syncSeries']);
+    Route::post('/episodes/bulk', [EpisodeAdminController::class, 'bulk']);
+    Route::get('/episodes', [EpisodeAdminController::class, 'index']);
+    Route::post('/episodes', [EpisodeAdminController::class, 'store']);
+    Route::patch('/episodes/{id}', [EpisodeAdminController::class, 'update']);
+    Route::post('/episodes/{id}/audio', [EpisodeAdminController::class, 'uploadAudio']);
+    Route::delete('/episodes/{id}', [EpisodeAdminController::class, 'destroy']);
 
-    // Sync chỉ episodes  (body: { series_id?: string })
-    Route::post('episodes', [SyncController::class, 'syncEpisodes']);
+    Route::get('/categories', [CategoryAdminController::class, 'index']);
+    Route::post('/categories/rename', [CategoryAdminController::class, 'rename']);
 
-    // Sync tất cả (series → episodes)
-    Route::post('all', [SyncController::class, 'syncAll']);
+    Route::get('/users', [UserAdminController::class, 'index']);
+    Route::patch('/users/{id}', [UserAdminController::class, 'update']);
+    Route::post('/users/{id}/grant-vip', [UserAdminController::class, 'grantVip']);
+    Route::post('/users/{id}/revoke-vip', [UserAdminController::class, 'revokeVip']);
+
+    Route::get('/orders', [OrderAdminController::class, 'index']);
+    Route::patch('/orders/{id}', [OrderAdminController::class, 'update']);
+    Route::get('/plans', [OrderAdminController::class, 'plans']);
+    Route::post('/plans', [PlanAdminController::class, 'store']);
+    Route::patch('/plans/{id}', [PlanAdminController::class, 'update']);
+    Route::delete('/plans/{id}', [PlanAdminController::class, 'destroy']);
+
+    Route::get('/comments', [CommentAdminController::class, 'index']);
+    Route::delete('/comments/{id}', [CommentAdminController::class, 'destroy']);
+    Route::patch('/comments/{id}/pin', [CommentAdminController::class, 'pin']);
+
+    Route::get('/ratings', [RatingAdminController::class, 'index']);
+    Route::delete('/ratings/{id}', [RatingAdminController::class, 'destroy']);
+
+    Route::get('/community', [CommunityAdminController::class, 'index']);
+    Route::get('/community/comments', [CommunityAdminController::class, 'comments']);
+    Route::delete('/community/comments/{id}', [CommunityAdminController::class, 'destroyComment']);
+    Route::delete('/community/{id}', [CommunityAdminController::class, 'destroy']);
+
+    Route::get('/settings', [SettingsAdminController::class, 'show']);
+    Route::patch('/settings', [SettingsAdminController::class, 'update']);
+
+    Route::get('/jobs', [JobAdminController::class, 'index']);
+
+    Route::prefix('sync')->group(function () {
+        Route::get('status', [SyncController::class, 'status']);
+        Route::post('series', [SyncController::class, 'syncSeries']);
+        Route::post('episodes', [SyncController::class, 'syncEpisodes']);
+        Route::post('all', [SyncController::class, 'syncAll']);
+    });
 });

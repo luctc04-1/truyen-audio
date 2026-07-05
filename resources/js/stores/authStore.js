@@ -5,12 +5,43 @@ import { useToastStore } from '@/stores/toastStore';
 import { extractApiPayload } from '@/utils/helpers';
 import { getEcho, disconnectEcho } from '@/services/echo';
 
+const USER_CACHE_KEY = 'auth_user_cache';
+
+function cacheUser(userData) {
+    if (!userData) {
+        sessionStorage.removeItem(USER_CACHE_KEY);
+        return;
+    }
+
+    try {
+        sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(userData));
+    } catch {
+        // sessionStorage đầy hoặc bị chặn — bỏ qua
+    }
+}
+
 export const useAuthStore = defineStore('auth', () => {
     const user = ref(null);
     const token = ref(localStorage.getItem('auth_token'));
     const loading = ref(false);
     const transitioning = ref(false);
     const bootstrapped = ref(false);
+    let bootstrapPromise = null;
+
+    const hydrateUserFromCache = () => {
+        if (!token.value || user.value) {
+            return;
+        }
+
+        try {
+            const cached = sessionStorage.getItem(USER_CACHE_KEY);
+            if (cached) {
+                user.value = JSON.parse(cached);
+            }
+        } catch {
+            sessionStorage.removeItem(USER_CACHE_KEY);
+        }
+    };
 
     const isAuthenticated = computed(() => !!token.value && !!user.value);
     const isAdmin = computed(() => !!user.value?.is_admin);
@@ -45,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
     const persistSession = (payload) => {
         token.value = payload.token;
         user.value = payload.user;
+        cacheUser(payload.user);
 
         if (token.value) {
             localStorage.setItem('auth_token', token.value);
@@ -109,27 +141,40 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         user.value = extractApiPayload(await AuthService.me());
+        cacheUser(user.value);
         getEcho(token.value);
         return user.value;
     };
 
     const bootstrap = async () => {
-        if (bootstrapped.value) {
-            return;
+        if (bootstrapPromise) {
+            return bootstrapPromise;
         }
 
-        bootstrapped.value = true;
+        bootstrapPromise = (async () => {
+            hydrateUserFromCache();
 
-        if (!token.value) {
-            return;
-        }
+            if (!token.value) {
+                bootstrapped.value = true;
+                return;
+            }
 
-        try {
-            await fetchMe();
-            getEcho(token.value);
-        } catch {
-            await logout();
-        }
+            // Có cache → bootstrapped ngay, validate token ở nền
+            if (user.value) {
+                bootstrapped.value = true;
+                fetchMe().catch(() => logout());
+                return;
+            }
+
+            try {
+                await fetchMe();
+            } catch {
+                await logout();
+            }
+            bootstrapped.value = true;
+        })();
+
+        return bootstrapPromise;
     };
 
     const logout = async () => {
@@ -144,6 +189,7 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = null;
             token.value = null;
             localStorage.removeItem('auth_token');
+            sessionStorage.removeItem(USER_CACHE_KEY);
             disconnectEcho();
             resetLoadingIfIdle();
         }

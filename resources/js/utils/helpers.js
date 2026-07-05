@@ -94,6 +94,38 @@ export const throttle = (func, limit) => {
 /** Unwrap Laravel API payload: { success, data } → data */
 export const extractApiPayload = (response) => response?.data ?? response;
 
+export const formatMoney = (n) => `${Number(n || 0).toLocaleString('vi-VN')}đ`;
+
+export const formatAdminDate = (iso, { dateOnly = false } = {}) => {
+  if (!iso) return '—';
+  return dateOnly
+    ? new Date(iso).toLocaleDateString('vi-VN')
+    : new Date(iso).toLocaleString('vi-VN');
+};
+
+export const formatCompactCount = (n) => {
+  const num = Number(n || 0);
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+  return num.toLocaleString('vi-VN');
+};
+
+const ORDER_STATUS_LABELS = {
+  paid: 'Đã thanh toán',
+  pending: 'Chờ xử lý',
+  cancelled: 'Đã hủy',
+  failed: 'Thất bại',
+};
+
+export const orderStatusLabel = (status) => ORDER_STATUS_LABELS[status] || status;
+
+export const orderStatusClass = (status) => ({
+  paid: 'badge bg-success-subtle text-success',
+  pending: 'badge bg-warning-subtle text-warning',
+  cancelled: 'badge bg-secondary-subtle text-secondary',
+  failed: 'badge bg-danger-subtle text-danger',
+}[status] || 'badge bg-light text-dark');
+
 /**
  * Thời gian tương đối tiếng Việt.
  */

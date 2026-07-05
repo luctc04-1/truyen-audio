@@ -44,6 +44,13 @@ class JwtAuthenticate
             ], 401);
         }
 
+        if ($user->is_banned ?? false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản của bạn đã bị khóa.',
+            ], 403);
+        }
+
         $request->setUserResolver(fn () => $user);
 
         return $next($request);

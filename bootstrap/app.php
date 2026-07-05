@@ -17,7 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'jwt.auth' => \App\Http\Middleware\JwtAuthenticate::class,
+            'jwt.client' => \App\Http\Middleware\JwtAuthenticate::class,
             'jwt.optional' => \App\Http\Middleware\JwtOptionalAuthenticate::class,
+            'jwt.admin' => \App\Http\Middleware\JwtAdminAuthenticate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
