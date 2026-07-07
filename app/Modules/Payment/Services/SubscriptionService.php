@@ -40,4 +40,43 @@ class SubscriptionService
             ]);
         });
     }
+
+    public function grantManual(User $user, Plan $plan): Subscription
+    {
+        return DB::transaction(function () use ($user, $plan) {
+            $active = $user->subscriptions()
+                ->currentlyValid()
+                ->orderByDesc('end_at')
+                ->lockForUpdate()
+                ->first();
+
+            $startAt = now();
+            $endAt = ($active && $active->end_at?->isFuture())
+                ? $active->end_at->copy()->addDays($plan->duration_days)
+                : $startAt->copy()->addDays($plan->duration_days);
+
+            Subscription::query()
+                ->where('user_id', $user->id)
+                ->active()
+                ->update(['is_active' => false]);
+
+            return Subscription::create([
+                'user_id'    => $user->id,
+                'plan_id'    => $plan->id,
+                'order_id'   => null,
+                'start_at'   => $startAt,
+                'end_at'     => $endAt,
+                'is_active'  => true,
+                'created_at' => now(),
+            ]);
+        });
+    }
+
+    public function revokeActive(User $user): void
+    {
+        Subscription::query()
+            ->where('user_id', $user->id)
+            ->active()
+            ->update(['is_active' => false]);
+    }
 }

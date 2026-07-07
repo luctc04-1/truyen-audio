@@ -1,5 +1,5 @@
 <template>
-  <div class="app">
+  <div class="app" :class="{ 'app--admin': isAdminRoute }">
     <AppHeader v-if="!isAdminRoute && !hideHeader" />
     <main :class="['main', { 'main-admin': isAdminRoute, 'main-with-player': showMiniPlayer }]">
       <router-view v-slot="{ Component }">
@@ -39,15 +39,16 @@ import NowPlaying from './components/NowPlaying.vue'
 import AuthOverlay from './components/AuthOverlay.vue'
 import AppToast from './components/AppToast.vue'
 import { useAudioStore } from '@/stores/audioStore'
-import { applyThemeToDocument } from '@/utils/theme'
+import { isAdminPath } from '@/utils/shellEarly'
 
 const $route = useRoute()
 const audio = useAudioStore()
-const isAdminRoute = computed(() => $route.meta.layout === 'admin')
+
+const isAdminRoute = computed(() => (
+  $route.meta.layout === 'admin' || isAdminPath($route.path)
+))
 const hideHeader = computed(() => !!$route.meta.hideHeader)
 const showMiniPlayer = computed(() => !isAdminRoute.value && !!audio.currentEpisode)
-
-applyThemeToDocument(localStorage.getItem('theme') || 'dark')
 </script>
 
 <style>
@@ -124,10 +125,19 @@ html {
   scroll-behavior: smooth;
 }
 
-body {
+body:not(.admin-route) {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+body.admin-route {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -145,7 +155,7 @@ a {
   text-decoration: none;
 }
 
-button {
+body:not(.admin-route) button {
   font-family: inherit;
   cursor: pointer;
   border: none;
@@ -158,7 +168,7 @@ img {
   display: block;
 }
 
-ul {
+body:not(.admin-route) ul {
   list-style: none;
 }
 
@@ -204,6 +214,11 @@ input {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: var(--bg);
+}
+
+.app.app--admin {
+  background: #f3f6f9;
 }
 
 .main {
@@ -216,7 +231,11 @@ input {
 }
 
 .main-admin {
-  padding-bottom: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  overflow: visible;
 }
 
 /* ===== Social Float ===== */

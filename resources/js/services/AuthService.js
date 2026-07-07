@@ -48,6 +48,19 @@ const AuthService = {
     logout() {
         return ApiService.post('/auth/logout');
     },
+
+    forgotPassword(email) {
+        return ApiService.post('/auth/forgot-password', { email });
+    },
+
+    resetPassword({ email, token, password, password_confirmation }) {
+        return ApiService.post('/auth/reset-password', {
+            email,
+            token,
+            password,
+            password_confirmation,
+        });
+    },
 };
 
 export default AuthService;

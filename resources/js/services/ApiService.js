@@ -45,7 +45,12 @@ class ApiService {
      */
     async get(endpoint, params = {}) {
         const url = new URL(this.baseURL + endpoint, window.location.origin);
-        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+        Object.entries(params).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === '') {
+                return;
+            }
+            url.searchParams.append(key, value);
+        });
 
         try {
             const response = await fetch(url.toString(), {
@@ -53,7 +58,7 @@ class ApiService {
                 headers: this.getHeaders(),
             });
 
-            return this.handleResponse(response);
+            return this.handleResponse(response, endpoint);
         } catch (error) {
             console.error('GET request failed:', error);
             throw error;
@@ -75,7 +80,7 @@ class ApiService {
                 body: JSON.stringify(data),
             });
 
-            return this.handleResponse(response);
+            return this.handleResponse(response, endpoint);
         } catch (error) {
             console.error('POST request failed:', error);
             throw error;
@@ -97,7 +102,7 @@ class ApiService {
                 body: JSON.stringify(data),
             });
 
-            return this.handleResponse(response);
+            return this.handleResponse(response, endpoint);
         } catch (error) {
             console.error('PUT request failed:', error);
             throw error;
@@ -119,7 +124,7 @@ class ApiService {
                 body: JSON.stringify(data),
             });
 
-            return this.handleResponse(response);
+            return this.handleResponse(response, endpoint);
         } catch (error) {
             console.error('PATCH request failed:', error);
             throw error;
@@ -139,9 +144,33 @@ class ApiService {
                 headers: this.getHeaders(),
             });
 
-            return this.handleResponse(response);
+            return this.handleResponse(response, endpoint);
         } catch (error) {
             console.error('DELETE request failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * POST multipart/form-data (file uploads)
+     */
+    async postForm(endpoint, formData) {
+        const headers = {};
+        const token = this.getToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        try {
+            const response = await fetch(this.baseURL + endpoint, {
+                method: 'POST',
+                headers,
+                body: formData,
+            });
+
+            return this.handleResponse(response, endpoint);
+        } catch (error) {
+            console.error('POST form request failed:', error);
             throw error;
         }
     }
@@ -150,9 +179,10 @@ class ApiService {
      * Handle API response
      *
      * @param {Response} response
+     * @param {string} endpoint
      * @returns {Promise}
      */
-    async handleResponse(response) {
+    async handleResponse(response, endpoint = '') {
         const contentType = response.headers.get('content-type') || '';
 
         if (!contentType.includes('application/json')) {
@@ -164,6 +194,12 @@ class ApiService {
         const data = await response.json();
 
         if (!response.ok) {
+            if (response.status === 401) {
+                await this.handleUnauthorized();
+            } else if (response.status === 403 && endpoint.startsWith('/admin')) {
+                await this.handleAdminDenied();
+            }
+
             const error = new Error(data.message || 'API request failed');
             error.status = response.status;
             error.errors = data.errors ?? null;
@@ -171,6 +207,47 @@ class ApiService {
         }
 
         return data;
+    }
+
+    async handleUnauthorized() {
+        const { useAuthStore } = await import('@/stores/authStore');
+        const auth = useAuthStore();
+
+        if (!auth.token) {
+            return;
+        }
+
+        await auth.logout();
+
+        // Bootstrap tự xử lý session; tránh nháy /auth khi reload
+        if (!auth.bootstrapped) {
+            return;
+        }
+
+        const router = (await import('@/router')).default;
+        const current = router.currentRoute.value;
+
+        if (current.name !== 'Auth') {
+            await router.push({
+                name: 'Auth',
+                query: { redirect: current.fullPath },
+            });
+        }
+    }
+
+    async handleAdminDenied() {
+        const { useAuthStore } = await import('@/stores/authStore');
+        const auth = useAuthStore();
+
+        if (!auth.bootstrapped) {
+            return;
+        }
+
+        const router = (await import('@/router')).default;
+
+        if (router.currentRoute.value.path.startsWith('/admin')) {
+            await router.replace({ name: 'Home' });
+        }
     }
 }
 

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Auth\Controllers;
 
+use App\Support\SystemSettings;
 use App\Shared\Controllers\BaseController;
 use App\Modules\Auth\Services\AuthService;
 use Illuminate\Database\QueryException;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use UnexpectedValueException;
 
 class AuthController extends BaseController
@@ -43,11 +45,15 @@ class AuthController extends BaseController
 
     public function register(Request $request)
     {
+        if (! SystemSettings::bool('registration_enabled', true)) {
+            return $this->error('Hệ thống tạm thời không nhận đăng ký mới.', 403);
+        }
+
         try {
             $data = $request->validate([
                 'username' => 'required|string|max:255',
                 'email'    => 'required|email|unique:users,email',
-                'password' => 'required|string|min:6|confirmed',
+                'password' => AuthService::passwordValidationRules(),
             ]);
 
             $payload = $this->authService->register($data);
@@ -211,6 +217,65 @@ class AuthController extends BaseController
     public function logout(Request $request)
     {
         return $this->success(null, 'Đăng xuất thành công');
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'email' => 'required|email',
+            ]);
+
+            $this->authService->sendPasswordResetLink($data['email']);
+
+            return $this->success(null, 'Nếu email tồn tại trong hệ thống, chúng tôi đã gửi liên kết đặt lại mật khẩu.');
+        } catch (ValidationException $e) {
+            return $this->error(
+                collect($e->errors())->flatten()->first() ?? 'Yêu cầu không hợp lệ',
+                422,
+                $e->errors()
+            );
+        } catch (TransportExceptionInterface $e) {
+            Log::error('Forgot password mail failed', ['message' => $e->getMessage()]);
+
+            return $this->error(
+                config('app.debug')
+                    ? 'Gửi email thất bại. Kiểm tra cấu hình MAIL trong .env.'
+                    : 'Không thể gửi email đặt lại mật khẩu',
+                500
+            );
+        } catch (QueryException $e) {
+            Log::error('Forgot password database error', ['message' => $e->getMessage()]);
+
+            return $this->error('Không thể gửi email đặt lại mật khẩu', 500);
+        } catch (\Exception $e) {
+            Log::error('Forgot password failed', ['message' => $e->getMessage()]);
+
+            return $this->error('Không thể gửi email đặt lại mật khẩu', 500);
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'email'    => 'required|email',
+                'token'    => 'required|string',
+                'password' => AuthService::passwordValidationRules(),
+            ]);
+
+            $this->authService->resetPassword($data);
+
+            return $this->success(null, 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay.');
+        } catch (ValidationException $e) {
+            return $this->error(
+                collect($e->errors())->flatten()->first() ?? 'Đặt lại mật khẩu thất bại',
+                422,
+                $e->errors()
+            );
+        } catch (\Exception $e) {
+            return $this->error('Đặt lại mật khẩu thất bại', 400);
+        }
     }
 
     private function userWithStats($user): array
