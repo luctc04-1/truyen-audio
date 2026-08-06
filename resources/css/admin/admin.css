@@ -1,7 +1,4 @@
-﻿@import url('/theme/admin/assets/css/bootstrap.min.css');
-@import url('/theme/admin/assets/css/icons.min.css');
-
-.admin-shell {
+﻿.admin-shell {
   --admin-bg: #f3f6f9;
   --admin-surface: #ffffff;
   --admin-border: #e9ebec;

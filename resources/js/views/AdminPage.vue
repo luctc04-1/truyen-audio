@@ -361,7 +361,7 @@
           <article class="panel">
             <div class="panel-header compact"><div><p>Hồ sơ</p><h2>Chi tiết user</h2></div></div>
             <div class="profile-card">
-              <img src="/theme/admin/assets/images/users/avatar-2.jpg" alt="User" />
+              <img :src="'/theme/admin/assets/images/users/avatar-2.jpg'" alt="User" />
               <strong>Minh Anh</strong>
               <small>VIP tháng còn 18 ngày</small>
             </div>
