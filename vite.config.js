@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import laravel from 'laravel-vite-plugin'
 import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig(({ mode }) => {
@@ -11,7 +12,17 @@ export default defineConfig(({ mode }) => {
     ).replace(/\/$/, '');
 
     return {
-        plugins: [vue()],
+        plugins: [
+            laravel({
+                input: [
+                    'resources/js/main.js',
+                    'resources/css/app.css',
+                ],
+                refresh: true,
+            }),
+
+            vue(),
+        ],
         resolve: {
             alias: {
                 '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
@@ -33,18 +44,6 @@ export default defineConfig(({ mode }) => {
                     target: apiProxyTarget,
                     changeOrigin: true,
                     secure: false,
-                },
-            },
-        },
-        build: {
-            outDir: 'public/build',
-            manifest: 'manifest.json',
-            emptyOutDir: true,
-            rollupOptions: {
-                output: {
-                    entryFileNames: 'assets/[name]-[hash].js',
-                    chunkFileNames: 'assets/[name]-[hash].js',
-                    assetFileNames: 'assets/[name]-[hash][extname]',
                 },
             },
         },

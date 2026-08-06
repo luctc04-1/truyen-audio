@@ -24,7 +24,7 @@
         Thêm truyện
       </button>
       <div class="admin-user">
-        <img src="/theme/admin/assets/images/users/avatar-1.jpg" alt="Admin" />
+        <img :src="'/theme/admin/assets/images/users/avatar-1.jpg'" alt="Admin" />
         <div>
           <strong>Admin</strong>
           <small>Quản trị viên</small>
