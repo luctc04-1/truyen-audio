@@ -2,7 +2,9 @@
 
 namespace App\Modules\Admin\Services;
 
+use App\Models\Episode;
 use App\Modules\Admin\Repositories\Contracts\SyncRepositoryInterface;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -33,7 +35,7 @@ class SupabaseSyncService
 
         $this->fetchPaginated('/rest/v1/series', ['select' => '*'], function (array $page) use (&$result) {
             $mapped = array_map(
-                fn (array $item) => array_merge(['id' => $item['id']], $this->mapSeriesData($item)),
+                fn(array $item) => array_merge(['id' => $item['id']], $this->mapSeriesData($item)),
                 $page
             );
 
@@ -63,19 +65,50 @@ class SupabaseSyncService
             $params['series_id'] = "eq.{$seriesId}";
         }
 
-        $result = ['total' => 0, 'inserted' => 0, 'updated' => 0];
+        $result = ['total' => 0, 'inserted' => 0, 'updated' => 0, 'audio_fetched' => 0, 'audio_missing' => 0];
 
         $this->fetchPaginated('/rest/v1/episodes_public', $params, function (array $page) use (&$result) {
-            $mapped = array_map(
-                fn (array $item) => array_merge(['id' => $item['id']], $this->mapEpisodeData($item)),
-                $page
-            );
+            $mapped = [];
+            $pageEpisodeIds = [];
+
+            foreach ($page as $item) {
+                $episodeId = (string) $item['id'];
+                $pageEpisodeIds[] = $episodeId;
+                $mapped[] = array_merge(['id' => $episodeId], $this->mapEpisodeData($item));
+            }
+
+            $existingAudioMap = Episode::query()
+                ->whereIn('id', $pageEpisodeIds)
+                ->whereNotNull('audio_path')
+                ->whereRaw("TRIM(COALESCE(audio_path, '')) <> ''")
+                ->pluck('audio_path', 'id')
+                ->all();
+
+            $missingEpisodeIds = array_values(array_diff($pageEpisodeIds, array_keys($existingAudioMap)));
+            $audioMap = $this->fetchEpisodeAudioUrls($missingEpisodeIds);
+
+
+            foreach ($mapped as &$episode) {
+                $episodeId = $episode['id'];
+                $episode['audio_path'] = $existingAudioMap[$episodeId] ?? $audioMap[$episodeId] ?? null;
+
+                if (in_array($episodeId, $missingEpisodeIds, true)) {
+                    if ($this->hasAudioPathValue($episode['audio_path'])) {
+                        $result['audio_fetched']++;
+                    } else {
+                        $result['audio_missing']++;
+                    }
+                }
+            }
+            unset($episode);
 
             $upserted = $this->syncRepository->upsertEpisodes($mapped);
             $result['total'] += count($page);
             $result['inserted'] += $upserted['inserted'];
             $result['updated'] += $upserted['updated'];
         });
+
+        Log::info("[SyncEpisodesAudio] Audio fetched: {$result['audio_fetched']} | Audio missing: {$result['audio_missing']}");
 
         Log::info("[SyncEpisodes] Tổng: {$result['total']} | Mới: {$result['inserted']} | Cập nhật: {$result['updated']}");
 
@@ -130,6 +163,72 @@ class SupabaseSyncService
     }
 
     /**
+     * Lấy audio URL cho nhiều episode bằng Http::pool, giữ payload đúng format của edge function hiện tại.
+     * Mỗi request vẫn gửi { episodeId: '...' }, nhưng chạy song song để tránh chờ từng episode sequentially.
+     *
+     * @param  array<int, string>  $episodeIds
+     * @return array<string, string>
+     */
+    private function fetchEpisodeAudioUrls(array $episodeIds): array
+    {
+        $episodeIds = array_values(array_unique(array_filter($episodeIds, fn($id) => is_string($id) && $id !== '')));
+
+        if ($episodeIds === []) {
+            return [];
+        }
+
+        $results = Http::pool(fn(Pool $pool) => collect($episodeIds)->map(
+            fn(string $id) =>
+            $pool->as($id)
+                ->timeout(15)
+                ->retry(2, 500)
+                ->withHeaders([
+                    'apikey' => $this->apiKey,
+                    'Authorization' => "Bearer {$this->authKey}",
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($this->baseUrl . '/functions/v1/get-audio-url', [
+                    'episodeId' => $id,
+                ])
+        ));
+
+        $audioMap = [];
+
+        foreach ($results as $episodeId => $response) {
+            if ($response->failed()) {
+                Log::warning("[SupabaseSyncService] Khong the lay audio URL cho episode {$episodeId}: {$response->status()} {$response->body()}");
+
+                continue;
+            }
+
+            $data = $response->json();
+            $url = $data['audioUrl'] ?? $data['audio_url'] ?? null;
+
+            if ($url) {
+                $audioMap[(string) $episodeId] = (string) $url;
+            }
+        }
+
+        return $audioMap;
+    }
+
+    /**
+     * Kiểm tra audio_path có giá trị thực sự hay không.
+     */
+    private function hasAudioPathValue(mixed $audioPath): bool
+    {
+        if ($audioPath === null) {
+            return false;
+        }
+
+        if (is_string($audioPath)) {
+            return trim($audioPath) !== '';
+        }
+
+        return $audioPath !== false && $audioPath !== '';
+    }
+
+    /**
      * Map dữ liệu series từ Supabase API → fillable của model Series
      */
     private function mapSeriesData(array $item): array
@@ -164,7 +263,6 @@ class SupabaseSyncService
             'duration_seconds' => $item['duration_seconds'] ?? null,
             'is_premium' => $item['is_premium'] ?? false,
             'play_count' => $item['play_count'] ?? 0,
-            'audio_path' => $item['audio_path'] ?? null,
             'transcript' => $item['transcript'] ?? null,
             'publish_at' => $item['publish_at'] ?? null,
             'created_at' => $item['created_at'] ?? null,
