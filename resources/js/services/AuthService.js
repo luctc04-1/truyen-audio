@@ -21,6 +21,23 @@ const AuthService = {
         return ApiService.post('/auth/google', { id_token: idToken });
     },
 
+    forgotPassword(email) {
+        return ApiService.post('/auth/forgot-password', { email });
+    },
+
+    verifyOtp({ email, otp }) {
+        return ApiService.post('/auth/verify-otp', { email, otp });
+    },
+
+    resetPassword({ email, otp, password, password_confirmation }) {
+        return ApiService.post('/auth/reset-password', {
+            email,
+            otp,
+            password,
+            password_confirmation,
+        });
+    },
+
     me() {
         return ApiService.get('/auth/me');
     },

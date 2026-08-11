@@ -74,6 +74,38 @@ export const useAuthStore = defineStore('auth', () => {
 
     const loginWithGoogle = (idToken) => authenticate(() => AuthService.google(idToken));
 
+    const forgotPassword = async (email) => {
+        loading.value = true;
+        try {
+            return extractApiPayload(await AuthService.forgotPassword(email));
+        } finally {
+            resetLoadingIfIdle();
+        }
+    };
+
+    const verifyOtp = async ({ email, otp }) => {
+        loading.value = true;
+        try {
+            return extractApiPayload(await AuthService.verifyOtp({ email, otp }));
+        } finally {
+            resetLoadingIfIdle();
+        }
+    };
+
+    const resetPassword = async (form) => {
+        loading.value = true;
+        try {
+            return extractApiPayload(await AuthService.resetPassword({
+                email: form.email,
+                otp: form.otp,
+                password: form.password,
+                password_confirmation: form.passwordConfirm,
+            }));
+        } finally {
+            resetLoadingIfIdle();
+        }
+    };
+
     const completeNavigation = async (router, redirectPath = '/', toastMessage = null) => {
         await router.replace(redirectPath || '/');
         endTransition();
@@ -169,6 +201,9 @@ export const useAuthStore = defineStore('auth', () => {
         login,
         register,
         loginWithGoogle,
+        forgotPassword,
+        verifyOtp,
+        resetPassword,
         fetchMe,
         bootstrap,
         logout,
