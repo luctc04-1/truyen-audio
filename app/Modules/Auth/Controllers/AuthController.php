@@ -19,10 +19,17 @@ class AuthController extends BaseController
     public function login(Request $request)
     {
         try {
-            $credentials = $request->validate([
-                'email'    => 'required|email',
-                'password' => 'required|string',
-            ]);
+            $credentials = $request->validate(
+                [
+                    'email'    => 'required|email',
+                    'password' => 'required|string',
+                ],
+                [
+                    'email.required'    => 'Vui lòng nhập email.',
+                    'email.email'       => 'Email không đúng định dạng.',
+                    'password.required' => 'Vui lòng nhập mật khẩu.',
+                ]
+            );
 
             $payload = $this->authService->loginWithCredentials(
                 $credentials['email'],
@@ -44,16 +51,29 @@ class AuthController extends BaseController
     public function register(Request $request)
     {
         try {
-            $data = $request->validate([
-                'username' => 'required|string|max:255',
-                'email'    => 'required|email|unique:users,email',
-                'password' => 'required|string|min:6|confirmed',
-            ]);
+            $data = $request->validate(
+                [
+                    'username' => ['required', 'max:50'],
+                    'email'    => ['required', 'email', 'unique:users,email'],
+                    'password' => ['required', 'min:8', 'confirmed'],
+                ],
+                [
+                    'username.required' => 'Vui lòng nhập họ tên.',
+                    'username.max'      => 'Họ tên không được vượt quá 50 ký tự.',
+                    'email.required'    => 'Vui lòng nhập email.',
+                    'email.email'       => 'Email không đúng định dạng.',
+                    'email.unique'      => 'Email này đã được sử dụng.',
+                    'password.required' => 'Vui lòng nhập mật khẩu.',
+                    'password.min'      => 'Mật khẩu phải có ít nhất 8 ký tự.',
+                    'password.confirmed'=> 'Mật khẩu xác nhận không khớp.',
+                ]
+            );
 
             $payload = $this->authService->register($data);
 
             return $this->success($payload, 'Đăng ký thành công', 201);
         } catch (ValidationException $e) {
+            Log::error('Validation error', ['message' => $e->errors()]);
             return $this->error(
                 collect($e->errors())->flatten()->first() ?? 'Đăng ký thất bại',
                 422,
@@ -112,10 +132,20 @@ class AuthController extends BaseController
         try {
             $userId = $request->user()->id;
 
-            $data = $request->validate([
-                'username'   => 'sometimes|string|max:255|unique:users,username,'.$userId,
-                'avatar_url' => 'sometimes|nullable|url|max:500',
-            ]);
+            $data = $request->validate(
+                [
+                    'username'   => ['sometimes', 'string', 'max:255', 'regex:/^[\pL\s]+$/u', 'unique:users,username,'.$userId],
+                    'avatar_url' => ['sometimes', 'nullable', 'url', 'max:500'],
+                ],
+                [
+                    'username.string'  => 'Họ tên phải là chuỗi ký tự.',
+                    'username.max'     => 'Họ tên không được vượt quá 255 ký tự.',
+                    'username.regex'   => 'Họ tên không được chứa ký tự đặc biệt.',
+                    'username.unique'  => 'Tên người dùng này đã được sử dụng.',
+                    'avatar_url.url'   => 'Đường dẫn ảnh đại diện không hợp lệ.',
+                    'avatar_url.max'   => 'Đường dẫn ảnh đại diện quá dài.',
+                ]
+            );
 
             $request->user()->update($data);
 
@@ -211,6 +241,107 @@ class AuthController extends BaseController
     public function logout(Request $request)
     {
         return $this->success(null, 'Đăng xuất thành công');
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        try {
+            $data = $request->validate(
+                [
+                    'email' => 'required|email',
+                ],
+                [
+                    'email.required' => 'Vui lòng nhập email.',
+                    'email.email'    => 'Email không đúng định dạng.',
+                ]
+            );
+
+            $this->authService->sendResetOtp($data['email']);
+
+            return $this->success(null, 'Mã xác nhận OTP đã được gửi đến email của bạn.');
+        } catch (ValidationException $e) {
+            return $this->error(
+                collect($e->errors())->flatten()->first() ?? 'Yêu cầu thất bại',
+                422,
+                $e->errors()
+            );
+        } catch (\Exception $e) {
+            Log::error('Forgot password error', ['message' => $e->getMessage()]);
+
+            return $this->error('Gửi mã OTP thất bại. Vui lòng thử lại sau.', 500);
+        }
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        try {
+            $data = $request->validate(
+                [
+                    'email' => 'required|email',
+                    'otp'   => 'required|string|size:6',
+                ],
+                [
+                    'email.required' => 'Vui lòng nhập email.',
+                    'email.email'    => 'Email không đúng định dạng.',
+                    'otp.required'   => 'Vui lòng nhập mã OTP.',
+                    'otp.size'       => 'Mã OTP phải gồm 6 chữ số.',
+                ]
+            );
+
+            $this->authService->verifyOtp($data['email'], $data['otp']);
+
+            return $this->success(null, 'Mã OTP hợp lệ.');
+        } catch (ValidationException $e) {
+            return $this->error(
+                collect($e->errors())->flatten()->first() ?? 'Xác nhận OTP thất bại',
+                422,
+                $e->errors()
+            );
+        } catch (\Exception $e) {
+            Log::error('Verify OTP error', ['message' => $e->getMessage()]);
+
+            return $this->error('Xác nhận OTP thất bại. Vui lòng thử lại.', 500);
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        try {
+            $data = $request->validate(
+                [
+                    'email'                 => 'required|email',
+                    'otp'                   => 'required|string|size:6',
+                    'password'              => 'required|string|min:8|confirmed',
+                ],
+                [
+                    'email.required'        => 'Vui lòng nhập email.',
+                    'email.email'           => 'Email không đúng định dạng.',
+                    'otp.required'          => 'Vui lòng nhập mã OTP.',
+                    'otp.size'              => 'Mã OTP phải gồm 6 chữ số.',
+                    'password.required'     => 'Vui lòng nhập mật khẩu mới.',
+                    'password.min'          => 'Mật khẩu mới phải có ít nhất 8 ký tự.',
+                    'password.confirmed'    => 'Mật khẩu xác nhận không khớp.',
+                ]
+            );
+
+            $this->authService->resetPasswordWithOtp(
+                $data['email'],
+                $data['otp'],
+                $data['password']
+            );
+
+            return $this->success(null, 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.');
+        } catch (ValidationException $e) {
+            return $this->error(
+                collect($e->errors())->flatten()->first() ?? 'Đặt lại mật khẩu thất bại',
+                422,
+                $e->errors()
+            );
+        } catch (\Exception $e) {
+            Log::error('Reset password error', ['message' => $e->getMessage()]);
+
+            return $this->error('Đặt lại mật khẩu thất bại. Vui lòng thử lại.', 500);
+        }
     }
 
     private function userWithStats($user): array
