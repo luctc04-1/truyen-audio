@@ -273,7 +273,7 @@ const handleSeek = (e) => {
 
 .np-bg { position: fixed; inset: 0; z-index: 0; }
 .np-bg img { width: 100%; height: 100%; object-fit: cover; filter: blur(40px); opacity: 0.25; transform: scale(1.2); }
-.np-bg-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(9, 9, 11, 0.6), var(--bg) 70%); }
+.np-bg-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, var(--bg-muted), var(--bg) 70%); }
 
 .np-inner {
   position: relative;
@@ -361,7 +361,7 @@ const handleSeek = (e) => {
   left: 50%;
   transform: translateX(-50%);
   z-index: 210;
-  background: #1c1c22;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);

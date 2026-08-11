@@ -128,7 +128,7 @@ const playEpisode = async () => {
   gap: 14px;
   padding: 12px 14px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;

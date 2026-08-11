@@ -181,7 +181,7 @@ const confirm = () => {
 .btn-danger {
   background: rgba(239, 68, 68, 0.14);
   border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #fca5a5;
+  color: var(--red, #ef4444);
 }
 
 .btn-danger:hover {

@@ -103,6 +103,12 @@ applyThemeToDocument(localStorage.getItem('theme') || 'dark')
   --primary-hover: #9333ea;
   --primary-light: rgba(168, 85, 247, 0.12);
   --primary-light2: rgba(168, 85, 247, 0.06);
+  --primary-border: rgba(168, 85, 247, 0.4);
+  --primary-focus: rgba(168, 85, 247, 0.4);
+  --primary-light-border: rgba(168, 85, 247, 0.2);
+  --amber-light: rgba(245, 158, 11, 0.12);
+  --amber-ring: rgba(245, 158, 11, 0.2);
+  --amber-focus: rgba(245, 158, 11, 0.4);
   --success: #22c55e;
   --success-border: #16a34a;
   --amber: #f59e0b;

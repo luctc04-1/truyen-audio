@@ -315,7 +315,7 @@ watch(() => route.query.tab, (value) => {
   border-radius: var(--radius-sm);
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
+  color: var(--red, #ef4444);
   font-size: 13px;
 }
 

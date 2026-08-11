@@ -228,7 +228,7 @@ const handleProgressClick = (e) => {
   left: 0;
   right: 0;
   z-index: 90;
-  background: rgba(17, 17, 19, 0.97);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   padding: var(--player-pad-y) var(--player-pad-x);
@@ -453,7 +453,7 @@ const handleProgressClick = (e) => {
   left: 50%;
   transform: translateX(-50%);
   z-index: 210;
-  background: #1c1c22;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
@@ -560,7 +560,7 @@ const handleProgressClick = (e) => {
   position: absolute;
   bottom: calc(100% + 10px);
   z-index: 200;
-  background: #1c1c22;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);

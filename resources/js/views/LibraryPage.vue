@@ -585,7 +585,7 @@ watch(currentPage, (page) => {
 }
 .list-tag-category {
   font-weight: 500;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-muted);
 }
 .story-list-stat { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); }
 .story-list-stat span { display: flex; align-items: center; gap: 4px; }
