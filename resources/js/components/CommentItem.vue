@@ -213,7 +213,8 @@ const saveEdit = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(9, 9, 11, 0.45);
+  background: var(--bg-muted);
+  opacity: 0.7;
   border-radius: inherit;
 }
 

@@ -207,7 +207,7 @@ const goLibrary = (genreId) => {
 .hero-title { font-size: clamp(32px, 5vw, 52px); font-weight: 800; line-height: 1.15; margin-bottom: 16px; }
 @media (min-width: 768px) { .hero-title { font-size: 56px; } }
 .text-gradient { background: var(--gradient-premium); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.hero-desc { font-size: 16px; color: var(--text-muted); margin-bottom: 28px; max-width: 460px; }
+.hero-desc { font-size: 16px; color: rgba(255, 255, 255, 0.75); margin-bottom: 28px; max-width: 460px; }
 .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 20px; height: 40px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; transition: all 0.2s; white-space: nowrap; cursor: pointer; text-decoration: none; font-family: inherit; }
@@ -218,6 +218,17 @@ const goLibrary = (genreId) => {
 .btn-primary:disabled { opacity: 0.6; cursor: default; transform: none; }
 .btn-outline { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
 .btn-outline:hover { background: var(--bg-muted); border-color: var(--primary); }
+
+.hero-actions .btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+.hero-actions .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+}
 .spin { width: 18px; height: 18px; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -256,12 +267,12 @@ const goLibrary = (genreId) => {
   gap: 14px;
   padding: 12px 14px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   border: 1px solid var(--border);
 }
 
 .sk {
-  background: linear-gradient(90deg, var(--bg-muted) 25%, rgba(255,255,255,0.06) 50%, var(--bg-muted) 75%);
+  background: linear-gradient(90deg, var(--bg-muted) 25%, var(--border) 50%, var(--bg-muted) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }

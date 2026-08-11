@@ -228,11 +228,11 @@ const onClose = () => emit('close')
   position: relative;
   width: 100%;
   max-width: 400px;
-  background: #141414;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
 
@@ -245,7 +245,7 @@ const onClose = () => emit('close')
   height: 30px;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -254,7 +254,7 @@ const onClose = () => emit('close')
 }
 
 .vip-pay-close:hover {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text);
 }
 
 .vip-pay-header {
@@ -280,14 +280,14 @@ const onClose = () => emit('close')
 .vip-pay-title {
   font-size: 16px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
   margin: 0 0 4px;
   line-height: 1.3;
 }
 
 .vip-pay-subtitle {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--text-muted);
   margin: 0;
   line-height: 1.45;
 }
@@ -327,8 +327,8 @@ const onClose = () => emit('close')
 }
 
 .vip-pay-details {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
@@ -337,7 +337,7 @@ const onClose = () => emit('close')
 .vip-pay-plan {
   text-align: center;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-muted);
   margin-bottom: 4px;
 }
 
@@ -357,16 +357,16 @@ const onClose = () => emit('close')
   gap: 12px;
   font-size: 12px;
   padding: 6px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border);
 }
 
 .vip-pay-row span:first-child {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .vip-pay-row span:last-child {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text);
   text-align: right;
   word-break: break-all;
 }
@@ -380,12 +380,12 @@ const onClose = () => emit('close')
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
@@ -410,13 +410,13 @@ const onClose = () => emit('close')
 .vip-pay-success h3 {
   font-size: 20px;
   font-weight: 800;
-  color: #fff;
+  color: var(--text);
   margin: 0 0 8px;
 }
 
 .vip-pay-success p {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--text-muted);
   margin: 0 0 20px;
   line-height: 1.5;
 }

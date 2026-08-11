@@ -371,35 +371,6 @@ watch(() => auth.isPremium, () => {
 </script>
 
 <style scoped>
-/* ===== CSS Variables ===== */
-:root {
-  --bg: #09090b;
-  --bg-card: #111113;
-  --bg-muted: #18181b;
-  --border: #27272a;
-  --border-strong: #3f3f46;
-  --text: #fafafa;
-  --text-muted: #a1a1aa;
-  --text-faint: #71717a;
-  --primary: #a855f7;
-  --primary-hover: #9333ea;
-  --primary-light: rgba(168, 85, 247, 0.12);
-  --primary-light2: rgba(168, 85, 247, 0.06);
-  --success: #22c55e;
-  --success-border: #16a34a;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --gradient-premium: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
-}
-
 .container {
   max-width: 1200px;
   margin: 0 auto;

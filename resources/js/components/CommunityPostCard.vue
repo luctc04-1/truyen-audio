@@ -289,7 +289,7 @@ const vClickOutside = {
 }
 
 .post-card:last-child { border-bottom: none; }
-.post-card:hover { background: rgba(255,255,255,0.02); }
+.post-card:hover { background: var(--bg-muted); }
 
 .post-header {
   display: flex;
