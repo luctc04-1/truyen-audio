@@ -59,6 +59,9 @@ export function setSeoMeta({ title, description, keywords, image, url, type = 'w
   const metaDesc = description || DEFAULT_DESCRIPTION
   const metaKeywords = keywords || DEFAULT_KEYWORDS
   const metaImage = image || DEFAULT_IMAGE
+
+  // Build clean canonical URL without extra query parameters if url is not explicitly provided
+  const cleanUrl = url || (window.location.origin + window.location.pathname)
   const metaUrl = url || window.location.href
 
   // Title
@@ -83,7 +86,7 @@ export function setSeoMeta({ title, description, keywords, image, url, type = 'w
   setOrUpdateMeta('meta[name="twitter:image"]', 'name', 'twitter:image', metaImage)
 
   // Canonical Link
-  setOrUpdateLink('canonical', metaUrl)
+  setOrUpdateLink('canonical', cleanUrl)
 
   // Schema JSON-LD
   setOrUpdateJsonLd(schema)

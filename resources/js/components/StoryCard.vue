@@ -40,10 +40,7 @@ const props = defineProps({
 })
 
 const storyLink = computed(() => {
-  if (props.story?.slug) {
-    return `/story/${props.story.id}-${props.story.slug}`
-  }
-  return `/story/${props.story.id}`
+  return `/story/${props.story.slug || props.story.id}`
 })
 
 const imgSrc = ref(props.story.image || FALLBACK)

@@ -80,7 +80,9 @@ export const useStoryStore = defineStore('story', () => {
 
   const upsertStory = (story) => {
     if (!story?.id) return
-    const index = stories.value.findIndex((s) => String(s.id) === String(story.id))
+    const index = stories.value.findIndex(
+      (s) => String(s.id) === String(story.id) || (story.slug && String(s.slug) === String(story.slug))
+    )
     if (index >= 0) {
       stories.value[index] = { ...stories.value[index], ...story }
     } else {
@@ -94,9 +96,16 @@ export const useStoryStore = defineStore('story', () => {
     upsertStory({ ...story, rating: Number(average).toFixed(1) })
   }
 
-  const getStoryById = (id) => {
-    if (!id) return null
-    return stories.value.find((s) => String(s.id) === String(id)) ?? null
+  const getStoryById = (idOrSlug) => {
+    if (!idOrSlug) return null
+    const target = String(idOrSlug).trim().toLowerCase()
+    return (
+      stories.value.find(
+        (s) =>
+          String(s.id).toLowerCase() === target ||
+          (s.slug && String(s.slug).toLowerCase() === target)
+      ) ?? null
+    )
   }
 
   const loadHome = async ({ force = false } = {}) => {

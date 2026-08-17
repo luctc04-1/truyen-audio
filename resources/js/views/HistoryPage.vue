@@ -108,7 +108,8 @@ const formatDate = (iso) => {
 }
 
 const goToSeries = (item) => {
-  if (item.series_id) router.push(`/story/${item.series_id}`)
+  const target = item.series_slug || item.series_id
+  if (target) router.push(`/story/${target}`)
 }
 
 onMounted(async () => {

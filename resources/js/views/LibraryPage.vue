@@ -87,7 +87,7 @@
 
           <!-- LIST VIEW -->
           <div v-else class="card" style="overflow:hidden;">
-            <div v-for="story in libStories" :key="story.id" class="story-list-item" @click="$router.push(`/story/${story.id}`)">
+            <div v-for="story in libStories" :key="story.id" class="story-list-item" @click="$router.push(`/story/${story.slug || story.id}`)">
               <div class="story-list-thumb">
                 <img :src="story.image" :alt="story.title">
                 <div class="story-list-overlay"></div>
@@ -162,6 +162,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStoryStore } from '@/stores/storyStore'
 import { useAuthStore } from '@/stores/authStore'
+import { setSeoMeta } from '@/utils/seo'
 import StoryService from '@/services/StoryService'
 import FollowService from '@/services/FollowService'
 import StoryCard from '@/components/StoryCard.vue'
@@ -330,6 +331,41 @@ const selectGenre = (genreId) => {
   router.replace({ query })
 }
 
+const updateLibrarySeo = () => {
+  const genreId = storyStore.selectedGenre
+  const genreLabel = genreId !== 'all' ? storyStore.getCategoryLabel(genreId) : ''
+
+  const title = genreLabel
+    ? `Kho Truyện Audio ${genreLabel} Hay Chọn Lọc`
+    : 'Kho Truyện Audio Hay Chọn Lọc | Nghe Truyện Online'
+
+  const description = genreLabel
+    ? `Danh sách đầy đủ các bộ truyện audio thể loại ${genreLabel} hay nhất chọn lọc, đọc truyện đêm khuya mượt mà chất lượng cao trên Truyện Audio Hay.`
+    : 'Kho truyện audio chọn lọc hay nhất - Đầy đủ các thể loại ngôn tình, tiên hiệp, kiếm hiệp, trinh thám mượt mà chất lượng cao.'
+
+  const keywords = genreLabel
+    ? `truyện audio ${genreLabel.toLowerCase()}, nghe truyện ${genreLabel.toLowerCase()}, audio ${genreLabel.toLowerCase()} hay, kho truyện audio`
+    : 'kho truyện audio, nghe truyện audio, truyện ngôn tình, truyện tiên hiệp, truyện trinh thám'
+
+  const canonicalUrl = window.location.origin + '/library' + (genreId !== 'all' ? `?category=${genreId}` : '')
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    'name': title,
+    'description': description,
+    'url': canonicalUrl
+  }
+
+  setSeoMeta({
+    title,
+    description,
+    keywords,
+    url: canonicalUrl,
+    schema
+  })
+}
+
 const resetAndFetch = () => {
   currentPage.value = 1
   fetchLibrary(1)
@@ -337,6 +373,7 @@ const resetAndFetch = () => {
 
 onMounted(() => {
   fetchLibrary(1)
+  updateLibrarySeo()
   document.addEventListener('click', handleClickOutside)
 })
 onUnmounted(() => {
@@ -346,7 +383,10 @@ onUnmounted(() => {
 
 watch(libraryFilter, resetAndFetch)
 watch(statusFilter, resetAndFetch)
-watch(() => storyStore.selectedGenre, resetAndFetch)
+watch(() => storyStore.selectedGenre, () => {
+  resetAndFetch()
+  updateLibrarySeo()
+})
 watch(() => route.query.category, (category) => {
   if (typeof category === 'string' && category && category !== 'all') {
     if (storyStore.selectedGenre !== category) storyStore.setGenre(category)

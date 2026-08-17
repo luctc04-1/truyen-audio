@@ -3,7 +3,7 @@
     <!-- HERO -->
     <section class="hero">
       <div class="hero-bg">
-        <img :src="heroCover" alt="Hero" />
+        <img :src="heroCover" alt="Truyện Audio Hay - Website Nghe Truyện Chọn Lọc Online" />
         <div class="hero-overlay"></div>
         <div class="hero-overlay2"></div>
       </div>
@@ -151,6 +151,7 @@ export default { name: 'HomePage' }
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStoryStore } from '@/stores/storyStore'
+import { setSeoMeta } from '@/utils/seo'
 import StoryCard from '@/components/StoryCard.vue'
 import StoryCardSkeleton from '@/components/StoryCardSkeleton.vue'
 import LatestEpisodeRow from '@/components/LatestEpisodeRow.vue'
@@ -166,6 +167,27 @@ const heroCover = computed(
 
 onMounted(() => {
   storyStore.loadHome()
+  setSeoMeta({
+    title: 'Trang chủ - Truyện Audio Hay Chọn Lọc Online',
+    description: 'Truyện Audio Hay - Kho truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, kiếm hiệp, trinh thám mượt mà chất lượng cao.',
+    keywords: 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay',
+    schema: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        'name': 'Truyện Audio Hay',
+        'alternateName': 'Truyen Audio Hay',
+        'url': window.location.origin
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        'name': 'Truyện Audio Hay',
+        'url': window.location.origin,
+        'logo': window.location.origin + '/favicon.ico'
+      }
+    ]
+  })
 })
 
 const goLibrary = (genreId) => {

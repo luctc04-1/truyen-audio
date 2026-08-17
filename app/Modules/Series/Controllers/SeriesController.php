@@ -9,6 +9,7 @@ use App\Modules\Series\Support\SeriesPresenter;
 use App\Shared\Controllers\BaseController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class SeriesController extends BaseController
 {
@@ -51,43 +52,34 @@ class SeriesController extends BaseController
     {
         $query = Series::query()
             ->select(self::LIST_COLUMNS)
-            ->withCount('episodes');
+            ->withCount(['episodes', 'ratings']);
 
-        if ($search = trim((string) $request->input('search'))) {
-            $escaped = addcslashes($search, '%_\\');
-            $query->where(function ($q) use ($escaped) {
-                $q->where('title', 'ilike', "%{$escaped}%")
-                    ->orWhere('narrator', 'ilike', "%{$escaped}%")
-                    ->orWhere('author', 'ilike', "%{$escaped}%");
+        // Bộ lọc danh mục
+        if ($request->filled('category')) {
+            $query->where('category', $request->query('category'));
+        }
+
+        // Bộ lọc từ khóa tìm kiếm (tên truyện, tác giả, người đọc)
+        if ($request->filled('search')) {
+            $search = '%' . trim($request->query('search')) . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', $search)
+                  ->orWhere('author', 'like', $search)
+                  ->orWhere('narrator', 'like', $search);
             });
         }
 
-        if ($category = trim((string) $request->input('category'))) {
-            $term = SeriesPresenter::categoryFilterTerm($category);
-            if ($term !== null) {
-                $escaped = addcslashes($term, '%_\\');
-                $query->where('category', 'ilike', "%{$escaped}%");
-            }
-        }
-
-        if ($status = $request->input('status')) {
-            $query->whereBoolean('is_complete', $status === 'completed');
-        }
-
-        if ($request->boolean('is_hot')) {
-            $query->whereBoolean('is_hot', true);
-        }
-
-        match ($request->input('sort', 'trending')) {
-            'hot'                => $query->orderBy('hot_order')->orderByDesc('total_listens'),
-            'newest'             => $query->orderByDesc('created_at'),
-            'popular', 'trending' => $query->orderByDesc('total_listens'),
-            'rating'             => $query->orderByDesc('average_rating'),
-            'az'                 => $query->orderBy('title'),
-            default              => $query->orderByDesc('total_listens'),
+        // Sắp xếp
+        $sortBy = $request->query('sort', 'latest');
+        match ($sortBy) {
+            'popular' => $query->orderByDesc('total_listens'),
+            'rating'  => $query->orderByDesc('average_rating'),
+            'hot'     => $query->where('is_hot', true)->orderBy('hot_order', 'asc')->orderByDesc('updated_at'),
+            default   => $query->orderByDesc('created_at'),
         };
 
-        $perPage   = min((int) $request->input('per_page', 36), 200);
+        // Phân trang
+        $perPage   = min((int) $request->query('per_page', 12), 50);
         $paginator = $query->paginate($perPage);
 
         return $this->success([
@@ -105,23 +97,28 @@ class SeriesController extends BaseController
 
     public function show(Request $request, string $id): JsonResponse
     {
-        $series = Series::query()
+        $query = Series::query()
             ->select(self::DETAIL_COLUMNS)
-            ->withCount(['episodes', 'ratings'])
-            ->find($id);
+            ->withCount(['episodes', 'ratings']);
+
+        // Tìm theo slug trước, fallback theo UUID (tương thích cũ)
+        $series = (clone $query)->where('slug', $id)->first();
+        if (! $series && Str::isUuid($id)) {
+            $series = (clone $query)->find($id);
+        }
 
         if (! $series) {
             return $this->error('Không tìm thấy truyện', 404);
         }
 
         $data             = SeriesPresenter::series($series);
-        $data['episodes'] = $this->episodesForRequest($request, $id);
+        $data['episodes'] = $this->episodesForRequest($request, $series->id);
 
         $user = $request->user();
         if ($user) {
             $data['is_followed'] = Favorite::query()
                 ->where('user_id', $user->id)
-                ->where('series_id', $id)
+                ->where('series_id', $series->id)
                 ->exists();
         }
 

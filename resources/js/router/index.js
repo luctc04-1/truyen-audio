@@ -21,11 +21,6 @@ const routes = [
     component: () => import('@/views/StoryDetailPage.vue'),
   },
   {
-    path: '/story/:id-:slug',
-    name: 'StoryDetailSlug',
-    component: () => import('@/views/StoryDetailPage.vue'),
-  },
-  {
     path: '/community',
     name: 'Community',
     component: () => import('@/views/CommunityPage.vue'),

@@ -41,14 +41,14 @@
         <div v-for="item in items" :key="item.id" class="follow-card">
 
           <!-- Thumbnail -->
-          <div class="thumb-wrap" @click="goToStory(item.id)">
+          <div class="thumb-wrap" @click="goToStory(item)">
             <img :src="item.cover_url || SERIES_FALLBACK_COVER" :alt="item.title" />
             <div class="thumb-overlay"></div>
           </div>
 
           <!-- Info -->
           <div class="item-info">
-            <div class="item-title" @click="goToStory(item.id)">{{ item.title }}</div>
+            <div class="item-title" @click="goToStory(item)">{{ item.title }}</div>
             <div v-if="item.narrator" class="item-narrator">{{ item.narrator }}</div>
 
             <div class="item-stats">
@@ -66,7 +66,7 @@
             <div v-if="item.followed_at" class="item-followed-at">Theo dõi từ {{ item.followed_at }}</div>
 
             <div class="item-actions">
-              <button class="btn-listen" @click="goToStory(item.id)">
+              <button class="btn-listen" @click="goToStory(item)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
                 Nghe
               </button>
@@ -96,7 +96,10 @@ const items       = ref([])
 const loading     = ref(true)
 const unfollowing = ref(null)
 
-const goToStory = (id) => router.push(`/story/${id}`)
+const goToStory = (item) => {
+  const target = typeof item === 'object' ? (item.slug || item.id) : item
+  router.push(`/story/${target}`)
+}
 
 onMounted(async () => {
   try {

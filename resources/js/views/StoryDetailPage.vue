@@ -337,15 +337,15 @@ const updatePageSeo = (currentStory) => {
   const title = currentStory.title ? `${currentStory.title} - Truyện Audio Hay` : ''
   const description = currentStory.description || currentStory.synopsis || `Nghe truyện audio ${currentStory.title} miễn phí chất lượng cao trên Truyện Audio Hay.`
   const image = currentStory.image || currentStory.cover_url || ''
-  const url = window.location.href
+  const canonicalUrl = `${window.location.origin}/story/${currentStory.slug || currentStory.id}`
 
-  const schema = {
+  const audiobookSchema = {
     '@context': 'https://schema.org',
     '@type': 'Audiobook',
     'name': currentStory.title,
     'description': description,
     'image': image,
-    'url': url,
+    'url': canonicalUrl,
     'inLanguage': 'vi',
     'author': {
       '@type': 'Person',
@@ -364,13 +364,38 @@ const updatePageSeo = (currentStory) => {
     } : undefined
   }
 
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        'position': 1,
+        'name': 'Trang chủ',
+        'item': window.location.origin
+      },
+      {
+        '@type': 'ListItem',
+        'position': 2,
+        'name': 'Kho truyện',
+        'item': `${window.location.origin}/library`
+      },
+      {
+        '@type': 'ListItem',
+        'position': 3,
+        'name': currentStory.title,
+        'item': canonicalUrl
+      }
+    ]
+  }
+
   setSeoMeta({
     title,
     description,
     image,
-    url,
+    url: canonicalUrl,
     type: 'book',
-    schema
+    schema: [audiobookSchema, breadcrumbSchema]
   })
 }
 

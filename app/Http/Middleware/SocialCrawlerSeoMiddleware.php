@@ -90,7 +90,7 @@ class SocialCrawlerSeoMiddleware
             $rawDesc = $series->synopsis ?? $series->description ?? 'Nghe truyện audio ' . $series->title . ' miễn phí chất lượng cao trên Truyện Audio Hay.';
             $description = Str::limit(trim(strip_tags($rawDesc)), 160);
             $image = $series->cover_url ?? $series->image ?? asset('favicon.ico');
-            $canonical = url('/story/' . $series->id . ($series->slug ? '-' . $series->slug : ''));
+            $canonical = url('/story/' . ($series->slug ?? $series->id));
 
             $schema = [
                 '@context'        => 'https://schema.org',

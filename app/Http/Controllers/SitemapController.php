@@ -42,8 +42,7 @@ class SitemapController extends Controller
 
         // 2. Series Pages
         foreach ($seriesList as $series) {
-            $slugPart = $series->slug ? '-' . $series->slug : '';
-            $storyUrl = $baseUrl . '/story/' . $series->id . $slugPart;
+            $storyUrl = $baseUrl . '/story/' . ($series->slug ?? $series->id);
             $lastmod = ($series->updated_at ?? $series->created_at ?? now())->toIso8601String();
 
             $xml[] = '  <url>';
