@@ -232,6 +232,7 @@ import { useStoryStore } from '@/stores/storyStore'
 import { useAudioStore } from '@/stores/audioStore'
 import { usePlayAccess } from '@/composables/usePlayAccess'
 import { formatEpisodeWithTitle, shareStory } from '@/utils/helpers'
+import { setSeoMeta } from '@/utils/seo'
 import VipBadge from '@/components/VipBadge.vue'
 import StoryRatingsTab from '@/components/StoryRatingsTab.vue'
 import StoryCommentsSection from '@/components/StoryCommentsSection.vue'
@@ -330,6 +331,52 @@ const hasPremiumEpisodes = computed(() => episodes.value.some((e) => e.is_premiu
 // Đồng bộ skeleton: thông tin chi tiết + danh sách tập cùng load, cùng hiện.
 const hasDetail = computed(() => episodes.value.length > 0)
 const showSkeleton = computed(() => storyStore.detailLoading && !hasDetail.value)
+
+const updatePageSeo = (currentStory) => {
+  if (!currentStory) return
+  const title = currentStory.title ? `${currentStory.title} - Truyện Audio Hay` : ''
+  const description = currentStory.description || currentStory.synopsis || `Nghe truyện audio ${currentStory.title} miễn phí chất lượng cao trên Truyện Audio Hay.`
+  const image = currentStory.image || currentStory.cover_url || ''
+  const url = window.location.href
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Audiobook',
+    'name': currentStory.title,
+    'description': description,
+    'image': image,
+    'url': url,
+    'inLanguage': 'vi',
+    'author': {
+      '@type': 'Person',
+      'name': currentStory.author || 'Đang cập nhật'
+    },
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'Truyện Audio Hay'
+    },
+    'aggregateRating': currentStory.rating ? {
+      '@type': 'AggregateRating',
+      'ratingValue': currentStory.rating,
+      'ratingCount': currentStory.rating_count || 1,
+      'bestRating': 5,
+      'worstRating': 1
+    } : undefined
+  }
+
+  setSeoMeta({
+    title,
+    description,
+    image,
+    url,
+    type: 'book',
+    schema
+  })
+}
+
+watch(story, (newVal) => {
+  if (newVal) updatePageSeo(newVal)
+}, { immediate: true })
 
 watch(() => story.value?.is_followed, (val) => {
   if (val != null) isFollowed.value = !!val

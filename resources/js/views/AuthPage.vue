@@ -3,7 +3,7 @@
     <div class="auth-card">
       <div class="auth-brand">
         <div class="auth-logo">T</div>
-        <h1 class="auth-title">Truyện Audio</h1>
+        <h1 class="auth-title">Truyện Audio Hay</h1>
         <p class="auth-subtitle">
           <template v-if="tab === 'forgot'">Nhập email tài khoản để nhận mã OTP</template>
           <template v-else-if="tab === 'verify-otp'">Nhập mã OTP 6 chữ số được gửi tới email</template>

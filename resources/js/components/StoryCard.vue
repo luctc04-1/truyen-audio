@@ -1,5 +1,5 @@
 <template>
-  <router-link :to="`/story/${story.id}`" class="story-card">
+  <router-link :to="storyLink" class="story-card">
     <div class="story-card-thumb">
       <img
         :src="imgSrc"
@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, watchEffect } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import VipBadge from '@/components/VipBadge.vue'
 
 const FALLBACK = 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&q=80'
@@ -37,6 +37,13 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+})
+
+const storyLink = computed(() => {
+  if (props.story?.slug) {
+    return `/story/${props.story.id}-${props.story.slug}`
+  }
+  return `/story/${props.story.id}`
 })
 
 const imgSrc = ref(props.story.image || FALLBACK)
