@@ -3,7 +3,10 @@
 namespace App\Modules\Auth\Services;
 
 use App\Models\User;
+use App\Modules\Auth\Mail\ResetPasswordMail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -170,5 +173,93 @@ class AuthService
             'token' => $this->jwtService->issueToken($user),
             'user'  => $this->formatUser($user),
         ];
+    }
+
+    public function sendResetOtp(string $email): void
+    {
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ['Email này chưa được đăng ký tài khoản.'],
+            ]);
+        }
+
+        $otp = (string) random_int(100000, 999999);
+
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+        DB::table('password_reset_tokens')->insert([
+            'email'      => $email,
+            'token'      => Hash::make($otp),
+            'created_at' => now(),
+        ]);
+
+        Mail::to($email)->queue(new ResetPasswordMail($otp));
+    }
+
+    public function verifyOtp(string $email, string $otp): void
+    {
+        $record = DB::table('password_reset_tokens')->where('email', $email)->first();
+
+        if (!$record) {
+            throw ValidationException::withMessages([
+                'otp' => ['Mã OTP không hợp lệ hoặc đã hết hạn.'],
+            ]);
+        }
+
+        $createdAt = \Carbon\Carbon::parse($record->created_at);
+        if (now()->subMinutes(15)->gt($createdAt)) {
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+            throw ValidationException::withMessages([
+                'otp' => ['Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.'],
+            ]);
+        }
+
+        if (!Hash::check($otp, $record->token)) {
+            throw ValidationException::withMessages([
+                'otp' => ['Mã OTP không chính xác.'],
+            ]);
+        }
+    }
+
+    public function resetPasswordWithOtp(string $email, string $otp, string $password): void
+    {
+        $record = DB::table('password_reset_tokens')->where('email', $email)->first();
+
+        if (!$record) {
+            throw ValidationException::withMessages([
+                'otp' => ['Mã OTP không hợp lệ hoặc đã hết hạn.'],
+            ]);
+        }
+
+        $createdAt = \Carbon\Carbon::parse($record->created_at);
+        if (now()->subMinutes(15)->gt($createdAt)) {
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+            throw ValidationException::withMessages([
+                'otp' => ['Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.'],
+            ]);
+        }
+
+        if (!Hash::check($otp, $record->token)) {
+            throw ValidationException::withMessages([
+                'otp' => ['Mã OTP không chính xác.'],
+            ]);
+        }
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ['Tài khoản không tồn tại.'],
+            ]);
+        }
+
+        $user->password = Hash::make($password);
+        $user->save();
+
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
     }
 }
