@@ -10,19 +10,25 @@
     <meta name="description" content="{{ $seoDescription ?? 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, trinh thám mượt mà chất lượng cao.' }}">
     <meta name="keywords" content="{{ $seoKeywords ?? 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay' }}">
 
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+
     <!-- OpenGraph / Facebook / Zalo -->
     <meta property="og:type" content="{{ $seoOgType ?? 'website' }}">
     <meta property="og:site_name" content="Truyện Audio Hay">
     <meta property="og:title" content="{{ $seoTitle ?? 'Truyện Audio Hay | Nghe Truyện Hay Chọn Lọc Online' }}">
     <meta property="og:description" content="{{ $seoDescription ?? 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất, đọc truyện đêm khuya mượt mà chất lượng cao.' }}">
-    <meta property="og:image" content="{{ $seoImage ?? asset('favicon.ico') }}">
+    <meta property="og:image" content="{{ $seoImage ?? asset('images/og-image.jpg') }}">
     <meta property="og:url" content="{{ $seoCanonical ?? request()->fullUrl() }}">
 
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $seoTitle ?? 'Truyện Audio Hay | Nghe Truyện Hay Chọn Lọc Online' }}">
     <meta name="twitter:description" content="{{ $seoDescription ?? 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất.' }}">
-    <meta name="twitter:image" content="{{ $seoImage ?? asset('favicon.ico') }}">
+    <meta name="twitter:image" content="{{ $seoImage ?? asset('images/og-image.jpg') }}">
 
     <!-- Canonical URL -->
     <link rel="canonical" href="{{ $seoCanonical ?? request()->fullUrl() }}">

@@ -1,6 +1,15 @@
+<script setup>
+import logoImg from '@/../images/logo.png'
+</script>
+
 <template>
   <header class="header">
     <div class="container header-inner">
+      <router-link to="/" class="brand-logo" title="Truyện Audio Hay">
+        <img :src="logoImg" alt="Truyện Audio Hay" class="logo-img" />
+        <span class="brand-name">Truyện <span class="brand-highlight">Audio</span></span>
+      </router-link>
+
       <nav class="nav">
         <router-link to="/" :class="['nav-link', { active: $route.path === '/' }]">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -161,5 +170,48 @@
 .icon-btn svg {
   width: 20px;
   height: 20px;
+}
+
+/* Brand Logo */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.2s ease;
+}
+
+.brand-logo:hover {
+  opacity: 0.9;
+}
+
+.logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .brand-name {
+    display: inline-block;
+  }
+}
+
+.brand-highlight {
+  background: var(--gradient-premium);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 </style>

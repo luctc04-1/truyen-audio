@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="fav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" />
+      <stop offset="50%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+    <filter id="fav-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Transparent Background - Headphone & Book Icon -->
+  <path d="M 96 256 A 160 160 0 0 1 416 256" fill="none" stroke="url(#fav-grad)" stroke-width="36" stroke-linecap="round" filter="url(#fav-glow)" />
+
+  <rect x="64" y="230" width="48" height="110" rx="24" fill="url(#fav-grad)" />
+  <rect x="400" y="230" width="48" height="110" rx="24" fill="url(#fav-grad)" />
+
+  <path d="M 256 200 L 180 230 L 180 340 L 256 315 L 332 340 L 332 230 Z" fill="none" stroke="url(#fav-grad)" stroke-width="16" stroke-linejoin="round" stroke-linecap="round" />
+  <path d="M 256 200 L 256 315" fill="none" stroke="url(#fav-grad)" stroke-width="12" stroke-linecap="round" />
+
+  <line x1="210" y1="375" x2="210" y2="415" stroke="url(#fav-grad)" stroke-width="10" stroke-linecap="round" />
+  <line x1="240" y1="360" x2="240" y2="430" stroke="url(#fav-grad)" stroke-width="10" stroke-linecap="round" />
+  <line x1="272" y1="360" x2="272" y2="430" stroke="url(#fav-grad)" stroke-width="10" stroke-linecap="round" />
+  <line x1="302" y1="375" x2="302" y2="415" stroke="url(#fav-grad)" stroke-width="10" stroke-linecap="round" />
+</svg>

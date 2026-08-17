@@ -5,7 +5,7 @@
 const DEFAULT_TITLE = 'Truyện Audio Hay | Nghe Truyện Hay Chọn Lọc Online'
 const DEFAULT_DESCRIPTION = 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, trinh thám mượt mà chất lượng cao.'
 const DEFAULT_KEYWORDS = 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay'
-const DEFAULT_IMAGE = '/favicon.ico'
+const DEFAULT_IMAGE = '/images/og-image.jpg'
 
 function setOrUpdateMeta(selector, attrName, attrValue, content) {
   let element = document.head.querySelector(selector)

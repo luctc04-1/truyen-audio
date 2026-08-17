@@ -2,7 +2,7 @@
   <div class="auth-page" :class="{ 'auth-page-busy': auth.transitioning }">
     <div class="auth-card">
       <div class="auth-brand">
-        <div class="auth-logo">T</div>
+        <img :src="logoImg" alt="Truyện Audio Hay" class="auth-logo-img" />
         <h1 class="auth-title">Truyện Audio Hay</h1>
         <p class="auth-subtitle">
           <template v-if="tab === 'forgot'">Nhập email tài khoản để nhận mã OTP</template>
@@ -310,6 +310,7 @@
 </template>
 
 <script setup>
+import logoImg from '@/../images/logo.png'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
@@ -761,18 +762,13 @@ watch(() => route.query.tab, (value) => {
   margin-bottom: 24px;
 }
 
-.auth-logo {
-  width: 44px;
-  height: 44px;
+.auth-logo-img {
+  width: 54px;
+  height: 54px;
   margin: 0 auto 12px;
-  border-radius: var(--radius-sm);
-  background: var(--gradient-premium);
-  color: #09090b;
-  font-weight: 800;
-  font-size: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+  box-shadow: var(--shadow-md);
 }
 
 .auth-title {

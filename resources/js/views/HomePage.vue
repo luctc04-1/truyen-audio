@@ -148,6 +148,7 @@ export default { name: 'HomePage' }
 </script>
 
 <script setup>
+import heroBannerImg from '@/../images/hero-banner.jpg'
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStoryStore } from '@/stores/storyStore'
@@ -162,7 +163,7 @@ const storyStore = useStoryStore()
 const stories = computed(() => storyStore.stories)
 
 const heroCover = computed(
-  () => storyStore.trendingStories[0]?.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1600&q=80'
+  () => storyStore.trendingStories[0]?.image || heroBannerImg
 )
 
 onMounted(() => {
@@ -171,6 +172,7 @@ onMounted(() => {
     title: 'Trang chủ - Truyện Audio Hay Chọn Lọc Online',
     description: 'Truyện Audio Hay - Kho truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, kiếm hiệp, trinh thám mượt mà chất lượng cao.',
     keywords: 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay',
+    image: '/images/og-image.jpg',
     schema: [
       {
         '@context': 'https://schema.org',
@@ -184,7 +186,7 @@ onMounted(() => {
         '@type': 'Organization',
         'name': 'Truyện Audio Hay',
         'url': window.location.origin,
-        'logo': window.location.origin + '/favicon.ico'
+        'logo': window.location.origin + '/images/logo.png'
       }
     ]
   })
