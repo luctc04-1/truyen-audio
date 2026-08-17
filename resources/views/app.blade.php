@@ -5,12 +5,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#09090b">
-    <title>Truyện Audio | Nghe truyện Việt Nam</title>
-    <meta name="description"
-        content="Truyện Audio - Nghe truyện độc quyền mọi lúc mọi nơi. Khám phá hàng ngàn tập truyện audio từ ngôn tình, giang hồ đến trinh thám.">
-    {{-- <link rel="stylesheet" href="/theme/admin/assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/theme/admin/assets/css/icons.min.css">
-    <link rel="stylesheet" href="/theme/client/style.css"> --}}
+
+    <title>{{ $seoTitle ?? 'Truyện Audio Hay | Nghe Truyện Hay Chọn Lọc Online' }}</title>
+    <meta name="description" content="{{ $seoDescription ?? 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, trinh thám mượt mà chất lượng cao.' }}">
+    <meta name="keywords" content="{{ $seoKeywords ?? 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay' }}">
+
+    <!-- OpenGraph / Facebook / Zalo -->
+    <meta property="og:type" content="{{ $seoOgType ?? 'website' }}">
+    <meta property="og:site_name" content="Truyện Audio Hay">
+    <meta property="og:title" content="{{ $seoTitle ?? 'Truyện Audio Hay | Nghe Truyện Hay Chọn Lọc Online' }}">
+    <meta property="og:description" content="{{ $seoDescription ?? 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất, đọc truyện đêm khuya mượt mà chất lượng cao.' }}">
+    <meta property="og:image" content="{{ $seoImage ?? asset('favicon.ico') }}">
+    <meta property="og:url" content="{{ $seoCanonical ?? request()->fullUrl() }}">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $seoTitle ?? 'Truyện Audio Hay | Nghe Truyện Hay Chọn Lọc Online' }}">
+    <meta name="twitter:description" content="{{ $seoDescription ?? 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất.' }}">
+    <meta name="twitter:image" content="{{ $seoImage ?? asset('favicon.ico') }}">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ $seoCanonical ?? request()->fullUrl() }}">
+
+    <!-- Default WebSite Schema.org -->
+    <script type="application/ld+json">
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => 'Truyện Audio Hay',
+            'alternateName' => 'Truyen Audio Hay',
+            'url' => url('/'),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
+
+    @if (!empty($seoSchema))
+    <!-- Additional Structured Data Schema.org -->
+    <script type="application/ld+json">
+        {!! json_encode($seoSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+    </script>
+    @endif
 
     @vite(['resources/js/main.js', 'resources/css/app.css'])
 </head>
@@ -20,3 +53,5 @@
 </body>
 
 </html>
+
+

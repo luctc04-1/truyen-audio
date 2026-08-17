@@ -3,7 +3,7 @@
     <div class="auth-card">
       <div class="auth-brand">
         <div class="auth-logo">T</div>
-        <h1 class="auth-title">Truyện Audio</h1>
+        <h1 class="auth-title">Truyện Audio Hay</h1>
         <p class="auth-subtitle">Đăng nhập để theo dõi truyện và lưu tiến trình nghe</p>
       </div>
 

@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [
+            \App\Http\Middleware\SocialCrawlerSeoMiddleware::class,
+        ]);
         $middleware->alias([
             'jwt.auth' => \App\Http\Middleware\JwtAuthenticate::class,
             'jwt.optional' => \App\Http\Middleware\JwtOptionalAuthenticate::class,

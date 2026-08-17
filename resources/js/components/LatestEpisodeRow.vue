@@ -23,7 +23,7 @@
     <div class="update-body">
       <div class="update-top">
         <router-link
-          :to="`/story/${item.series.id}`"
+          :to="storyLink"
           class="update-series-title"
           @click.stop
         >
@@ -70,6 +70,13 @@ const props = defineProps({
 const storyStore = useStoryStore()
 const audioStore = useAudioStore()
 const { auth, playBlocked: isPlayBlocked, ensurePlayAccess } = usePlayAccess()
+
+const storyLink = computed(() => {
+  if (props.item.series?.slug) {
+    return `/story/${props.item.series.id}-${props.item.series.slug}`
+  }
+  return `/story/${props.item.series?.id}`
+})
 
 const imgSrc = ref(props.item.series?.image || FALLBACK)
 

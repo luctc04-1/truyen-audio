@@ -2,7 +2,7 @@
   <transition name="np-slide">
     <div v-if="audio.expanded && audio.currentEpisode" class="now-playing">
       <div class="np-bg">
-        <img v-if="story?.image" :src="story.image" alt="" />
+        <img v-if="story?.image" :src="story.image" :alt="story?.title || 'Ảnh bìa truyện'" />
         <div class="np-bg-overlay"></div>
       </div>
 
@@ -152,7 +152,7 @@
             @click="selectEpisode(ep)"
           >
             <div class="np-queue-thumb">
-              <img :src="story?.image" alt="" />
+              <img :src="story?.image" :alt="story?.title || 'Bìa truyện'" />
               <div v-if="!playBlocked(ep)" class="np-queue-overlay">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
               </div>

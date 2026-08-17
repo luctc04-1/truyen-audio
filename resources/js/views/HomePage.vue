@@ -16,9 +16,9 @@
             Nội dung mới mỗi tuần
           </div>
           <h1 class="hero-title">
-            <span class="text-gradient">Truyện Audio</span>
+            <span class="text-gradient">Truyện Audio Hay</span>
           </h1>
-          <p class="hero-desc">Kho truyện audio ngôn tình, audio dài, trinh thám, giang hồ và học đường chất lượng cao.</p>
+          <p class="hero-desc">Kho truyện audio chọn lọc ngôn tình, đọc truyện đêm khuya, trinh thám, kiếm hiệp và tiên hiệp chất lượng cao.</p>
           <div class="hero-actions">
             <router-link to="/library">
               <button class="btn btn-lg btn-primary">
