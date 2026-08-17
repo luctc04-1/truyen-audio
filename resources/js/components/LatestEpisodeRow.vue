@@ -72,10 +72,7 @@ const audioStore = useAudioStore()
 const { auth, playBlocked: isPlayBlocked, ensurePlayAccess } = usePlayAccess()
 
 const storyLink = computed(() => {
-  if (props.item.series?.slug) {
-    return `/story/${props.item.series.id}-${props.item.series.slug}`
-  }
-  return `/story/${props.item.series?.id}`
+  return `/story/${props.item.series?.slug || props.item.series?.id}`
 })
 
 const imgSrc = ref(props.item.series?.image || FALLBACK)

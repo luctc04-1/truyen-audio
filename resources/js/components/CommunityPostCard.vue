@@ -45,7 +45,7 @@
 
     <template v-else>
       <p class="post-body">{{ post.content }}</p>
-      <router-link v-if="post.series" :to="`/story/${post.series.id}`" class="series-attach">
+      <router-link v-if="post.series" :to="`/story/${post.series.slug || post.series.id}`" class="series-attach">
         <img :src="post.series.cover_url || post.series.image || SERIES_FALLBACK_COVER" :alt="post.series.title" class="series-cover" />
         <div class="series-info">
           <span class="series-label">Truyện đính kèm</span>

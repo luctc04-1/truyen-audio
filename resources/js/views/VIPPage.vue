@@ -127,6 +127,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { setSeoMeta } from '@/utils/seo'
 import ApiService from '@/services/ApiService'
 import OrderService from '@/services/OrderService'
 import ButtonSpinner from '@/components/ButtonSpinner.vue'
@@ -174,6 +175,26 @@ const loadPlans = async () => {
 onMounted(async () => {
   await loadPlans()
   await checkReturnFromPayOs()
+
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    'mainEntity': faqs.value.map(faq => ({
+      '@type': 'Question',
+      'name': faq.q,
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': faq.a
+      }
+    }))
+  }
+
+  setSeoMeta({
+    title: 'Nâng cấp VIP - Truyện Audio Hay Không Giới Hạn',
+    description: 'Đăng ký hội viên VIP để nghe không giới hạn tất cả các bộ truyện audio chất lượng cao, không quảng cáo, truy cập sớm tập mới trên Truyện Audio Hay.',
+    keywords: 'vip truyện audio, nâng cấp vip truyện, nghe truyện không quảng cáo, truyện audio vip',
+    schema: faqSchema
+  })
 })
 
 onUnmounted(() => {

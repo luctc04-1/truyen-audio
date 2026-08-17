@@ -162,7 +162,7 @@
               v-for="item in history"
               :key="item.id"
               class="history-item"
-              @click="item.series_id && $router.push(`/story/${item.series_id}`)"
+              @click="(item.series_slug || item.series_id) && $router.push(`/story/${item.series_slug || item.series_id}`)"
             >
               <div class="history-thumb">
                 <img v-if="item.cover_url" :src="item.cover_url" :alt="item.series_title" />
@@ -180,7 +180,7 @@
                   <div class="history-progress-fill" :style="{ width: item.progress + '%' }"></div>
                 </div>
               </div>
-              <button class="icon-btn" style="flex-shrink:0;" @click.stop="item.series_id && $router.push(`/story/${item.series_id}`)">
+              <button class="icon-btn" style="flex-shrink:0;" @click.stop="(item.series_slug || item.series_id) && $router.push(`/story/${item.series_slug || item.series_id}`)">
                 <svg v-if="!item.completed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--primary)" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
                 <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
               </button>
@@ -209,7 +209,7 @@
             <router-link
               v-for="item in followed"
               :key="item.id"
-              :to="`/story/${item.id}`"
+              :to="`/story/${item.slug || item.id}`"
               class="story-card"
               style="width:120px;flex-shrink:0;"
             >
