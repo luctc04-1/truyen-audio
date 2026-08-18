@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#09090b">
 
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v={{ @filemtime(public_path('favicon-32x32.png')) ?: time() }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v={{ @filemtime(public_path('favicon-16x16.png')) ?: time() }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v={{ @filemtime(public_path('apple-touch-icon.png')) ?: time() }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v={{ @filemtime(public_path('favicon.ico')) ?: time() }}">
+
     <title>{{ $seoTitle ?? 'Truyện Audio Hay | Nghe Truyện Hay Chọn Lọc Online' }}</title>
     <meta name="description" content="{{ $seoDescription ?? 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, trinh thám mượt mà chất lượng cao.' }}">
     <meta name="keywords" content="{{ $seoKeywords ?? 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay' }}">
