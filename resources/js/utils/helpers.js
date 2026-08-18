@@ -153,3 +153,21 @@ export const shareStory = async (story) => {
         return 'copied';
     }
 };
+
+/**
+ * Format số rút gọn (1.2K, 3.4M)
+ */
+export const formatNumber = (num) => {
+    const val = Number(num) || 0;
+    if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+    if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+    return val.toLocaleString('vi-VN');
+};
+
+/**
+ * Format tiền tệ VNĐ
+ */
+export const formatCurrency = (amount) => {
+    return Number(amount || 0).toLocaleString('vi-VN') + 'đ';
+};
+

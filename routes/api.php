@@ -1,6 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Modules\Admin\Controllers\AdminCommentController;
+use App\Modules\Admin\Controllers\AdminCommunityController;
+use App\Modules\Admin\Controllers\AdminDashboardController;
+use App\Modules\Admin\Controllers\AdminEpisodeController;
+use App\Modules\Admin\Controllers\AdminOrderController;
+use App\Modules\Admin\Controllers\AdminPlanController;
+use App\Modules\Admin\Controllers\AdminSeriesController;
+use App\Modules\Admin\Controllers\AdminSettingController;
+use App\Modules\Admin\Controllers\AdminUserController;
 use App\Modules\Admin\Controllers\SyncController;
 use App\Modules\Auth\Controllers\AuthController;
 use App\Modules\Community\Controllers\CommunityController;
@@ -102,18 +110,88 @@ Route::middleware('jwt.auth')->group(function () {
     Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
 });
 
-// ─── Admin: Đồng bộ dữ liệu từ Supabase ──────────────────────────────────
-Route::prefix('admin/sync')->group(function () {
 
-    // Kiểm tra trạng thái DB hiện tại
-    Route::get('status', [SyncController::class, 'status']);
+// ─── Admin Management API ───────────────────────────────────────────────
+Route::prefix('admin')->group(function () {
+    // Dashboard Stats
+    Route::get('dashboard/stats', [AdminDashboardController::class, 'stats']);
 
-    // Sync chỉ series
-    Route::post('series', [SyncController::class, 'syncSeries']);
+    // Series Management
+    Route::prefix('series')->group(function () {
+        Route::get('/', [AdminSeriesController::class, 'index']);
+        Route::get('/categories', [AdminSeriesController::class, 'categories']);
+        Route::get('/hot', [AdminSeriesController::class, 'hotList']);
+        Route::post('/reorder-hot', [AdminSeriesController::class, 'reorderHot']);
+        Route::post('/{id}/set-hot-order', [AdminSeriesController::class, 'setHotOrder']);
+        Route::get('/{id}', [AdminSeriesController::class, 'show']);
+        Route::post('/', [AdminSeriesController::class, 'store']);
+        Route::patch('/{id}', [AdminSeriesController::class, 'update']);
+        Route::post('/{id}/toggle-hot', [AdminSeriesController::class, 'toggleHot']);
+        Route::post('/{id}/toggle-premium', [AdminSeriesController::class, 'togglePremium']);
+        Route::delete('/{id}', [AdminSeriesController::class, 'destroy']);
+    });
 
-    // Sync chỉ episodes  (body: { series_id?: string })
-    Route::post('episodes', [SyncController::class, 'syncEpisodes']);
+    // Episodes Management
+    Route::prefix('episodes')->group(function () {
+        Route::get('/', [AdminEpisodeController::class, 'index']);
+        Route::get('/{id}', [AdminEpisodeController::class, 'show']);
+        Route::post('/', [AdminEpisodeController::class, 'store']);
+        Route::patch('/{id}', [AdminEpisodeController::class, 'update']);
+        Route::delete('/{id}', [AdminEpisodeController::class, 'destroy']);
+    });
 
-    // Sync tất cả (series → episodes)
-    Route::post('all', [SyncController::class, 'syncAll']);
+    // Users Management
+    Route::prefix('users')->group(function () {
+        Route::get('/', [AdminUserController::class, 'index']);
+        Route::get('/{id}', [AdminUserController::class, 'show']);
+        Route::post('/{id}/toggle-admin', [AdminUserController::class, 'toggleAdmin']);
+        Route::post('/{id}/grant-vip', [AdminUserController::class, 'grantVip']);
+    });
+
+    // Orders Management
+    Route::prefix('orders')->group(function () {
+        Route::get('/', [AdminOrderController::class, 'index']);
+        Route::patch('/{id}/status', [AdminOrderController::class, 'updateStatus']);
+    });
+
+    // Plans Management
+    Route::prefix('plans')->group(function () {
+        Route::get('/', [AdminPlanController::class, 'index']);
+        Route::post('/', [AdminPlanController::class, 'store']);
+        Route::patch('/{id}', [AdminPlanController::class, 'update']);
+        Route::delete('/{id}', [AdminPlanController::class, 'destroy']);
+    });
+
+    // Community & Comments Moderation
+    Route::prefix('community')->group(function () {
+        Route::get('/stats', [AdminCommunityController::class, 'stats']);
+        Route::get('/posts', [AdminCommunityController::class, 'posts']);
+        Route::get('/posts/{id}', [AdminCommunityController::class, 'postDetail']);
+        Route::delete('/posts/{id}', [AdminCommunityController::class, 'destroyPost']);
+        Route::post('/posts/batch-delete', [AdminCommunityController::class, 'batchDestroyPosts']);
+        Route::get('/comments', [AdminCommunityController::class, 'comments']);
+        Route::delete('/comments/{id}', [AdminCommunityController::class, 'destroyComment']);
+        Route::post('/comments/batch-delete', [AdminCommunityController::class, 'batchDestroyComments']);
+    });
+
+    // Comments Moderation (Legacy / Alias)
+    Route::prefix('comments')->group(function () {
+        Route::get('/', [AdminCommunityController::class, 'comments']);
+        Route::delete('/{id}', [AdminCommunityController::class, 'destroyComment']);
+        Route::post('/batch-delete', [AdminCommunityController::class, 'batchDestroyComments']);
+    });
+
+    // System & SEO Settings
+    Route::prefix('settings')->group(function () {
+        Route::get('/', [AdminSettingController::class, 'index']);
+        Route::post('/', [AdminSettingController::class, 'update']);
+    });
+
+    // Sync & Crawler
+    Route::prefix('sync')->group(function () {
+        Route::get('status', [SyncController::class, 'status']);
+        Route::post('series', [SyncController::class, 'syncSeries']);
+        Route::post('episodes', [SyncController::class, 'syncEpisodes']);
+        Route::post('all', [SyncController::class, 'syncAll']);
+    });
 });

@@ -1,503 +1,454 @@
 <template>
   <div class="admin-shell">
+    <!-- Fixed Sidebar -->
     <AdminSidebar
       :active-section="activeSection"
-      :menu-items="menuItems"
+      :menu-groups="menuGroups"
       :open="sidebarOpen"
-      @change-section="activeSection = $event"
+      @change-section="onSectionChange"
+      @close-sidebar="sidebarOpen = false"
     />
 
-    <section class="admin-main">
-      <AdminTopbar v-model:search="search" @toggle-sidebar="sidebarOpen = !sidebarOpen" />
+    <!-- Main Admin Body (Scrollable with margin-left) -->
+    <main class="admin-main">
+      <!-- Topbar -->
+      <AdminTopbar
+        :current-title="currentTitle"
+        @toggle-sidebar="sidebarOpen = !sidebarOpen"
+        @quick-add-series="openAddSeries"
+      />
 
+      <!-- Content Area with Smooth Tab Transitions -->
       <div class="admin-content">
-        <div class="page-heading">
-          <div>
-            <p>Trang quản trị</p>
-            <h1>{{ currentTitle }}</h1>
-          </div>
-          <div class="heading-actions">
-            <button class="ghost-btn" type="button">
-              <i class="ri-upload-cloud-2-line"></i>
-              Import audio
-            </button>
-            <button class="ghost-btn" type="button">
-              <i class="ri-refresh-line"></i>
-              Đồng bộ crawl
-            </button>
-          </div>
-        </div>
-
-        <section v-if="activeSection === 'dashboard'" class="metrics-grid">
-          <article v-for="metric in metrics" :key="metric.label" class="metric-card">
-            <div class="metric-icon" :class="metric.tone">
-              <i :class="metric.icon"></i>
-            </div>
-            <div>
-              <p>{{ metric.label }}</p>
-              <h2>{{ metric.value }}</h2>
-              <span :class="metric.trend > 0 ? 'up' : 'down'">
-                <i :class="metric.trend > 0 ? 'ri-arrow-up-line' : 'ri-arrow-down-line'"></i>
-                {{ Math.abs(metric.trend) }}% tuần này
-              </span>
-            </div>
-          </article>
-        </section>
-
-        <section v-if="activeSection === 'dashboard'" class="workbench">
-          <article class="panel panel-wide">
-            <div class="panel-header">
+        <transition name="fade-slide" mode="out-in">
+          <!-- 1. DASHBOARD OVERVIEW -->
+          <div v-if="activeSection === 'dashboard'" key="dashboard" class="dashboard-view">
+            <!-- Welcome Hero Banner -->
+            <div class="welcome-hero">
               <div>
-                <p>Nội dung</p>
-                <h2>Danh sách truyện nổi bật</h2>
+                <div class="welcome-badge">
+                  <span class="live-pulse"></span>
+                  <span>Hệ thống: Trực tuyến & Sẵn sàng</span>
+                </div>
+                <h2 class="welcome-title">Trung Tâm Điều Hành Truyện Audio 🎧</h2>
+                <p class="welcome-sub">
+                  Tổng quan thời gian thực về kho truyện, doanh số gói VIP và tương tác người dùng trên toàn hệ thống.
+                </p>
               </div>
-              <div class="segmented">
-                <button
-                  v-for="filter in statusFilters"
-                  :key="filter"
-                  :class="{ active: activeFilter === filter }"
-                  type="button"
-                  @click="activeFilter = filter"
-                >
-                  {{ filter }}
+
+              <div class="welcome-actions">
+                <button class="btn btn-ghost btn-sm" type="button" @click="activeSection = 'series'">
+                  <i class="ri-book-open-line"></i>
+                  <span>Kho truyện</span>
+                </button>
+                <button class="btn btn-ghost btn-sm" type="button" @click="activeSection = 'sync'">
+                  <i class="ri-cloud-line"></i>
+                  <span>Đồng bộ dữ liệu</span>
                 </button>
               </div>
             </div>
 
-            <div class="table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Truyện</th>
-                    <th>Danh mục</th>
-                    <th>Tập</th>
-                    <th>Nghe</th>
-                    <th>Trạng thái</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="story in filteredStories" :key="story.title">
-                    <td>
-                      <div class="story-cell">
-                        <img :src="story.cover" :alt="story.title" />
-                        <div>
-                          <strong>{{ story.title }}</strong>
-                          <small>{{ story.author }} - {{ story.narrator }}</small>
-                        </div>
-                      </div>
-                    </td>
-                    <td>{{ story.category }}</td>
-                    <td>{{ story.episodes }}</td>
-                    <td>{{ story.listens }}</td>
-                    <td>
-                      <span class="status-pill" :class="story.statusClass">{{ story.status }}</span>
-                    </td>
-                    <td>
-                      <button class="icon-btn table-action" type="button" title="Chỉnh sửa">
-                        <i class="ri-pencil-line"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <!-- KPI Stats Cards -->
+            <div class="stats-grid">
+              <AdminStatsCard
+                label="Tổng số truyện"
+                :value="dashboardData.metrics?.total_series || 0"
+                icon="ri-book-3-fill"
+                tone="purple"
+                :trend="12"
+                subtext="Đang lưu trong kho truyện"
+              />
+              <AdminStatsCard
+                label="Tập audio phát hành"
+                :value="dashboardData.metrics?.total_episodes || 0"
+                icon="ri-headphone-fill"
+                tone="emerald"
+                :trend="8"
+                subtext="Sẵn sàng phát trực tuyến"
+              />
+              <AdminStatsCard
+                label="Thành viên đăng ký"
+                :value="dashboardData.metrics?.total_users || 0"
+                icon="ri-group-fill"
+                tone="blue"
+                :trend="15"
+                subtext="Tài khoản người dùng"
+              />
+              <AdminStatsCard
+                label="Doanh thu VIP"
+                :value="formatCurrency(dashboardData.metrics?.total_revenue || 0)"
+                icon="ri-vip-crown-fill"
+                tone="amber"
+                :trend="24"
+                subtext="Tổng nạp các gói VIP"
+              />
             </div>
-          </article>
 
-          <article class="panel">
-            <div class="panel-header compact">
-              <div>
-                <p>Kiểm duyệt</p>
-                <h2>Bình luận mới</h2>
+            <!-- Visual Analytics Grid: Plan Revenue & Category Distribution -->
+            <div class="analytics-grid">
+              <!-- VIP Plans Revenue Breakdown -->
+              <div class="card-panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>Doanh thu theo Gói VIP</h3>
+                    <span class="panel-subtitle">Tỉ trọng bán hàng các gói cước</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" type="button" @click="activeSection = 'orders'">
+                    Quản lý gói <i class="ri-arrow-right-s-line"></i>
+                  </button>
+                </div>
+
+                <div class="metric-bar-list">
+                  <div v-for="plan in dashboardData.plan_stats" :key="plan.id" class="metric-bar-item">
+                    <div class="metric-bar-header">
+                      <strong>{{ plan.name }} ({{ plan.orders_count }} đơn)</strong>
+                      <span>{{ formatCurrency(plan.revenue) }} ({{ plan.percentage || 0 }}%)</span>
+                    </div>
+                    <div class="progress-track">
+                      <div
+                        class="progress-fill progress-purple"
+                        :style="{ width: `${Math.max(plan.percentage || 0, 5)}%` }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <span class="soft-count">8 chờ duyệt</span>
+
+              <!-- Categories Distribution -->
+              <div class="card-panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>Phân bố Thể loại Truyện</h3>
+                    <span class="panel-subtitle">Top các danh mục nhiều truyện nhất</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" type="button" @click="activeSection = 'series'">
+                    Xem kho truyện <i class="ri-arrow-right-s-line"></i>
+                  </button>
+                </div>
+
+                <div class="metric-bar-list">
+                  <div v-for="cat in dashboardData.category_stats" :key="cat.category" class="metric-bar-item">
+                    <div class="metric-bar-header">
+                      <strong>{{ cat.category }}</strong>
+                      <span>{{ cat.count }} bộ ({{ cat.percentage }}%)</span>
+                    </div>
+                    <div class="progress-track">
+                      <div
+                        class="progress-fill progress-emerald"
+                        :style="{ width: `${Math.max(cat.percentage, 8)}%` }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="comment-list">
-              <div v-for="comment in comments" :key="comment.user" class="comment-item">
+            <!-- Top Series Rankings & Recent Orders Grid -->
+            <div class="dashboard-grid">
+              <!-- Top 5 Most Listened Series Table -->
+              <div class="card-panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>Bảng Xếp Hạng Truyện Nghe Nhiều Nhất</h3>
+                    <span class="panel-subtitle">Top 5 truyện audio được quan tâm nhất</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" type="button" @click="activeSection = 'series'">
+                    Xem tất cả <i class="ri-arrow-right-s-line"></i>
+                  </button>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th width="50">Hạng</th>
+                        <th>Bìa & Tên truyện</th>
+                        <th>Thể loại</th>
+                        <th>Tập</th>
+                        <th>Lượt nghe</th>
+                        <th>Đánh giá</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(story, idx) in dashboardData.top_series" :key="story.id">
+                        <td>
+                          <div class="rank-badge" :class="idx < 3 ? `rank-${idx + 1}` : 'rank-other'">
+                            {{ idx + 1 }}
+                          </div>
+                        </td>
+                        <td>
+                          <div class="story-cell">
+                            <img :src="story.cover_url || '/android-chrome-512x512.png'" :alt="story.title" />
+                            <div>
+                              <strong>{{ story.title }}</strong>
+                              <small>{{ story.author || 'Đang cập nhật' }}</small>
+                            </div>
+                          </div>
+                        </td>
+                        <td><span class="badge badge-neutral">{{ story.category }}</span></td>
+                        <td><strong>{{ story.total_episodes || 0 }}</strong> tập</td>
+                        <td><span class="text-muted">{{ formatNumber(story.total_listens || story.listen_count || 0) }}</span></td>
+                        <td>
+                          <span class="rating-text"><i class="ri-star-fill"></i> {{ Number(story.average_rating || 5).toFixed(1) }}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Recent 5 Orders Table -->
+              <div class="card-panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>Đơn Hàng VIP Gần Đây</h3>
+                    <span class="panel-subtitle">5 giao dịch thanh toán mới nhất</span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" type="button" @click="activeSection = 'orders'">
+                    Xem đơn <i class="ri-arrow-right-s-line"></i>
+                  </button>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách</th>
+                        <th>Gói</th>
+                        <th>Số tiền</th>
+                        <th>Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="order in dashboardData.recent_orders" :key="order.id">
+                        <td><strong class="order-code">{{ order.order_code }}</strong></td>
+                        <td>
+                          <div class="customer-info">
+                            <strong>{{ order.user?.username || 'Khách' }}</strong>
+                            <small>{{ order.user?.email }}</small>
+                          </div>
+                        </td>
+                        <td><span class="badge badge-vip">{{ order.plan?.name || 'VIP' }}</span></td>
+                        <td><strong class="text-amount">{{ formatCurrency(order.amount) }}</strong></td>
+                        <td>
+                          <span class="badge" :class="order.status === 'paid' ? 'badge-paid' : 'badge-pending'">
+                            {{ order.status === 'paid' ? 'Đã thu' : 'Chờ' }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Shortcuts Bar -->
+            <div class="quick-actions-bar">
+              <div class="quick-action-card" @click="activeSection = 'series'">
+                <div class="qa-icon purple"><i class="ri-book-2-line"></i></div>
                 <div>
-                  <strong>{{ comment.user }}</strong>
-                  <p>{{ comment.text }}</p>
-                  <small>{{ comment.story }}</small>
-                </div>
-                <div class="comment-actions">
-                  <button class="accept" type="button" title="Duyệt">
-                    <i class="ri-check-line"></i>
-                  </button>
-                  <button class="reject" type="button" title="Ẩn">
-                    <i class="ri-close-line"></i>
-                  </button>
+                  <strong>Quản lý kho truyện</strong>
+                  <p>Thêm mới, sửa ảnh bìa, danh mục và tác giả</p>
                 </div>
               </div>
-            </div>
-          </article>
-        </section>
 
-        <section v-if="activeSection === 'dashboard'" class="bottom-grid">
-          <article class="panel">
-            <div class="panel-header compact">
-              <div>
-                <p>Audio</p>
-                <h2>Upload jobs</h2>
-              </div>
-            </div>
-            <div class="job-list">
-              <div v-for="job in uploadJobs" :key="job.name" class="job-item">
-                <div class="job-top">
-                  <strong>{{ job.name }}</strong>
-                  <span>{{ job.progress }}%</span>
+              <div class="quick-action-card" @click="activeSection = 'episodes'">
+                <div class="qa-icon emerald"><i class="ri-play-circle-line"></i></div>
+                <div>
+                  <strong>Upload & Audio Studio</strong>
+                  <p>Thêm tập, phát nghe thử file audio trực tuyến</p>
                 </div>
-                <div class="progress-line">
-                  <span :style="{ width: `${job.progress}%` }"></span>
+              </div>
+
+              <div class="quick-action-card" @click="activeSection = 'hot-order'">
+                <div class="qa-icon amber"><i class="ri-fire-fill"></i></div>
+                <div>
+                  <strong>Sắp xếp Truyện Hot</strong>
+                  <p>Kéo thả & ưu tiên hiển thị truyện hot trang chủ</p>
                 </div>
-                <small>{{ job.status }}</small>
+              </div>
+
+              <div class="quick-action-card" @click="activeSection = 'sync'">
+                <div class="qa-icon blue"><i class="ri-refresh-line"></i></div>
+                <div>
+                  <strong>Đồng bộ Supabase & Crawler</strong>
+                  <p>Cập nhật truyện tự động từ nguồn bên ngoài</p>
+                </div>
               </div>
             </div>
-          </article>
+          </div>
 
-          <article class="panel">
-            <div class="panel-header compact">
-              <div>
-                <p>Doanh thu</p>
-                <h2>Gói VIP & đơn hàng</h2>
-              </div>
-            </div>
-            <div class="plan-list">
-              <div v-for="plan in plans" :key="plan.name" class="plan-row">
-                <span>{{ plan.name }}</span>
-                <strong>{{ plan.revenue }}</strong>
-                <small>{{ plan.orders }} đơn</small>
-              </div>
-            </div>
-          </article>
+          <!-- 2. SERIES MANAGEMENT -->
+          <div v-else-if="activeSection === 'series'" key="series">
+            <AdminSeriesManager ref="seriesManagerRef" @manage-episodes="handleManageEpisodes" />
+          </div>
 
-          <article class="panel quick-form">
-            <div class="panel-header compact">
-              <div>
-                <p>Thao tác nhanh</p>
-                <h2>Tạo tập audio</h2>
-              </div>
-            </div>
-            <label>
-              Truyện
-              <select>
-                <option>Thần Mộ</option>
-                <option>Đấu Phá Thương Khung</option>
-                <option>Ma Thổi Đèn</option>
-              </select>
-            </label>
-            <label>
-              Tên tập
-              <input type="text" value="Chương 128: Khởi hành" />
-            </label>
-            <label class="toggle-row">
-              <span>Yêu cầu VIP</span>
-              <input type="checkbox" checked />
-            </label>
-            <button class="primary-btn full" type="button">
-              <i class="ri-save-3-line"></i>
-              Lưu nháp
-            </button>
-          </article>
-        </section>
+          <!-- 2.1 HOT ORDER MANAGEMENT -->
+          <div v-else-if="activeSection === 'hot-order'" key="hot-order">
+            <AdminHotOrderManager />
+          </div>
 
-        <section v-if="activeSection === 'series'" class="module-grid">
-          <article class="panel panel-wide">
-            <div class="panel-header">
-              <div>
-                <p>Kho truyện</p>
-                <h2>Quản lý truyện audio</h2>
-              </div>
-              <button class="primary-btn" type="button"><i class="ri-add-line"></i>Thêm truyện</button>
-            </div>
-            <div class="table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Truyện</th>
-                    <th>Nguồn</th>
-                    <th>Premium</th>
-                    <th>Hot</th>
-                    <th>SEO</th>
-                    <th>Publish</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="story in stories" :key="story.title">
-                    <td>
-                      <div class="story-cell">
-                        <img :src="story.cover" :alt="story.title" />
-                        <div>
-                          <strong>{{ story.title }}</strong>
-                          <small>{{ story.author }} - {{ story.episodes }} tập</small>
-                        </div>
-                      </div>
-                    </td>
-                    <td>{{ story.source }}</td>
-                    <td><span class="status-pill" :class="story.statusClass">{{ story.status }}</span></td>
-                    <td><input type="checkbox" :checked="story.hot" /></td>
-                    <td>{{ story.seo }}</td>
-                    <td>{{ story.published }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
+          <!-- 3. EPISODES MANAGEMENT -->
+          <div v-else-if="activeSection === 'episodes'" key="episodes">
+            <AdminEpisodeManager :initial-series-id="jumpSeriesId" />
+          </div>
 
-          <article class="panel editor-panel">
-            <div class="panel-header compact">
-              <div>
-                <p>Form mẫu</p>
-                <h2>Thông tin truyện</h2>
-              </div>
-            </div>
-            <label>Tên truyện<input type="text" value="Thần Mộ" /></label>
-            <label>Slug<input type="text" value="than-mo" /></label>
-            <label>Danh mục<select><option>Tiên hiệp</option><option>Trinh thám</option></select></label>
-            <label>Tác giả<input type="text" value="Thần Đông" /></label>
-            <label>Người đọc<input type="text" value="MC Huyền Vũ" /></label>
-            <label>Mô tả<textarea rows="4">Mô tả ngắn hiển thị ở trang chi tiết truyện.</textarea></label>
-            <button class="primary-btn full" type="button"><i class="ri-save-3-line"></i>Lưu truyện</button>
-          </article>
-        </section>
+          <!-- 4. USERS MANAGEMENT -->
+          <div v-else-if="activeSection === 'users'" key="users">
+            <AdminUserManager />
+          </div>
 
-        <section v-if="activeSection === 'episodes'" class="module-grid">
-          <article class="panel panel-wide">
-            <div class="panel-header">
-              <div>
-                <p>Audio</p>
-                <h2>Danh sách tập truyện</h2>
-              </div>
-              <button class="primary-btn" type="button"><i class="ri-upload-cloud-line"></i>Upload tập</button>
-            </div>
-            <div class="table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Tập</th>
-                    <th>Truyện</th>
-                    <th>Thời lượng</th>
-                    <th>Nghe</th>
-                    <th>Audio</th>
-                    <th>Lịch đăng</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="episode in episodes" :key="episode.title">
-                    <td><strong>{{ episode.title }}</strong><small class="block-muted">#{{ episode.number }}</small></td>
-                    <td>{{ episode.series }}</td>
-                    <td>{{ episode.duration }}</td>
-                    <td>{{ episode.plays }}</td>
-                    <td><span class="status-pill" :class="episode.audioClass">{{ episode.audio }}</span></td>
-                    <td>{{ episode.publishAt }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
+          <!-- 5. ORDERS & VIP PLANS -->
+          <div v-else-if="activeSection === 'orders'" key="orders">
+            <AdminOrderManager />
+          </div>
 
-          <article class="panel editor-panel">
-            <div class="panel-header compact">
-              <div>
-                <p>Biên tập</p>
-                <h2>Tạo tập audio</h2>
-              </div>
-            </div>
-            <label>Truyện<select><option>Thần Mộ</option><option>Ma Thổi Đèn</option></select></label>
-            <label>Số tập<input type="number" value="682" /></label>
-            <label>Tiêu đề<input type="text" value="Chương 682: Cửa trời mở" /></label>
-            <label>File audio<div class="dropzone"><i class="ri-file-music-line"></i><span>Kéo file MP3 vào đây</span></div></label>
-            <label>Transcript<textarea rows="5">Nội dung transcript hoặc ghi chú tập...</textarea></label>
-            <label class="toggle-row"><span>Tập VIP</span><input type="checkbox" /></label>
-            <button class="primary-btn full" type="button"><i class="ri-save-3-line"></i>Lưu tập</button>
-          </article>
-        </section>
+          <!-- 6. SYNC & CRAWLER -->
+          <div v-else-if="activeSection === 'sync'" key="sync">
+            <AdminSyncManager />
+          </div>
 
-        <section v-if="activeSection === 'categories'" class="bottom-grid">
-          <article class="panel">
-            <div class="panel-header compact"><div><p>Phân loại</p><h2>Danh mục</h2></div></div>
-            <div class="simple-list">
-              <div v-for="category in categories" :key="category.name">
-                <span>{{ category.name }}</span>
-                <small>{{ category.count }} truyện</small>
-                <button class="icon-btn table-action" type="button"><i class="ri-pencil-line"></i></button>
-              </div>
-            </div>
-          </article>
-          <article class="panel">
-            <div class="panel-header compact"><div><p>Gắn nhãn</p><h2>Tags phổ biến</h2></div></div>
-            <div class="tag-cloud">
-              <span v-for="tag in tags" :key="tag">#{{ tag }}</span>
-            </div>
-          </article>
-          <article class="panel editor-panel">
-            <div class="panel-header compact"><div><p>Form mẫu</p><h2>Thêm danh mục/tag</h2></div></div>
-            <label>Tên<input type="text" value="Kiếm hiệp" /></label>
-            <label>Slug<input type="text" value="kiem-hiep" /></label>
-            <label>Loại<select><option>Danh mục</option><option>Tag</option></select></label>
-            <button class="primary-btn full" type="button"><i class="ri-add-line"></i>Thêm mới</button>
-          </article>
-        </section>
+          <!-- 7. COMMUNITY & COMMENTS MODERATION -->
+          <div v-else-if="activeSection === 'comments' || activeSection === 'community'" key="community">
+            <AdminCommunityManager />
+          </div>
 
-        <section v-if="activeSection === 'users'" class="module-grid">
-          <article class="panel panel-wide">
-            <div class="panel-header"><div><p>Tài khoản</p><h2>Người dùng</h2></div></div>
-            <div class="table-wrap">
-              <table class="admin-table">
-                <thead><tr><th>User</th><th>Gói</th><th>Thiết bị</th><th>Lượt nghe</th><th>Đăng nhập cuối</th><th>Quyền</th></tr></thead>
-                <tbody>
-                  <tr v-for="user in users" :key="user.email">
-                    <td><strong>{{ user.name }}</strong><small class="block-muted">{{ user.email }}</small></td>
-                    <td>{{ user.plan }}</td>
-                    <td>{{ user.devices }}</td>
-                    <td>{{ user.listens }}</td>
-                    <td>{{ user.lastLogin }}</td>
-                    <td><span class="status-pill" :class="user.admin ? 'premium' : 'draft'">{{ user.admin ? 'Admin' : 'Member' }}</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-          <article class="panel">
-            <div class="panel-header compact"><div><p>Hồ sơ</p><h2>Chi tiết user</h2></div></div>
-            <div class="profile-card">
-              <img :src="'/theme/admin/assets/images/users/avatar-2.jpg'" alt="User" />
-              <strong>Minh Anh</strong>
-              <small>VIP tháng còn 18 ngày</small>
-            </div>
-            <div class="stat-list">
-              <div><span>Yêu thích</span><strong>42 truyện</strong></div>
-              <div><span>Playlist</span><strong>6 danh sách</strong></div>
-              <div><span>Bình luận</span><strong>128</strong></div>
-            </div>
-          </article>
-        </section>
-
-        <section v-if="activeSection === 'orders'" class="module-grid">
-          <article class="panel panel-wide">
-            <div class="panel-header"><div><p>Thanh toán</p><h2>Đơn hàng VIP</h2></div></div>
-            <div class="table-wrap">
-              <table class="admin-table">
-                <thead><tr><th>Mã đơn</th><th>User</th><th>Gói</th><th>Số tiền</th><th>Phương thức</th><th>Trạng thái</th></tr></thead>
-                <tbody>
-                  <tr v-for="order in orders" :key="order.code">
-                    <td><strong>{{ order.code }}</strong></td>
-                    <td>{{ order.user }}</td>
-                    <td>{{ order.plan }}</td>
-                    <td>{{ order.amount }}</td>
-                    <td>{{ order.method }}</td>
-                    <td><span class="status-pill" :class="order.statusClass">{{ order.status }}</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-          <article class="panel editor-panel">
-            <div class="panel-header compact"><div><p>Gói cước</p><h2>Plan VIP</h2></div></div>
-            <label>Mã gói<input type="text" value="VIP_MONTH" /></label>
-            <label>Tên gói<input type="text" value="VIP tháng" /></label>
-            <label>Giá<input type="text" value="99000" /></label>
-            <label>Thời hạn ngày<input type="number" value="30" /></label>
-            <label class="toggle-row"><span>Đang bán</span><input type="checkbox" checked /></label>
-            <button class="primary-btn full" type="button"><i class="ri-save-3-line"></i>Lưu gói</button>
-          </article>
-        </section>
-
-        <section v-if="activeSection === 'jobs'" class="bottom-grid">
-          <article class="panel panel-wide">
-            <div class="panel-header"><div><p>Crawler</p><h2>Jobs lấy truyện</h2></div><button class="primary-btn" type="button"><i class="ri-play-line"></i>Chạy crawl</button></div>
-            <div class="timeline-list">
-              <div v-for="job in crawlJobs" :key="job.source">
-                <span :class="['timeline-dot', job.statusClass]"></span>
-                <div><strong>{{ job.source }}</strong><p>{{ job.detail }}</p><small>{{ job.time }}</small></div>
-              </div>
-            </div>
-          </article>
-          <article class="panel panel-wide">
-            <div class="panel-header compact"><div><p>Audio</p><h2>Upload jobs</h2></div></div>
-            <div class="job-list">
-              <div v-for="job in uploadJobs" :key="job.name" class="job-item">
-                <div class="job-top"><strong>{{ job.name }}</strong><span>{{ job.progress }}%</span></div>
-                <div class="progress-line"><span :style="{ width: `${job.progress}%` }"></span></div>
-                <small>{{ job.status }}</small>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section v-if="activeSection === 'comments'" class="module-grid">
-          <article class="panel panel-wide">
-            <div class="panel-header"><div><p>Cộng đồng</p><h2>Bình luận & đánh giá</h2></div></div>
-            <div class="comment-list large">
-              <div v-for="comment in comments" :key="comment.user" class="comment-item">
-                <div><strong>{{ comment.user }}</strong><p>{{ comment.text }}</p><small>{{ comment.story }}</small></div>
-                <div class="comment-actions"><button class="accept" type="button"><i class="ri-check-line"></i></button><button class="reject" type="button"><i class="ri-delete-bin-line"></i></button></div>
-              </div>
-            </div>
-          </article>
-          <article class="panel">
-            <div class="panel-header compact"><div><p>Rating</p><h2>Tổng quan đánh giá</h2></div></div>
-            <div class="rating-box"><strong>4.7</strong><span>★★★★★</span><small>12,840 lượt đánh giá</small></div>
-            <div class="stat-list">
-              <div><span>5 sao</span><strong>72%</strong></div>
-              <div><span>4 sao</span><strong>18%</strong></div>
-              <div><span>Cần xem lại</span><strong>46</strong></div>
-            </div>
-          </article>
-        </section>
-
-        <section v-if="activeSection === 'settings'" class="module-grid">
-          <article class="panel editor-panel">
-            <div class="panel-header compact"><div><p>Hệ thống</p><h2>Cài đặt website</h2></div></div>
-            <label>Tên website<input type="text" value="Truyen Audio" /></label>
-            <label>Domain chính<input type="text" value="https://truyenaudio.local" /></label>
-            <label>Storage audio<select><option>Local storage</option><option>S3 compatible</option></select></label>
-            <label>Số tập free trước VIP<input type="number" value="10" /></label>
-            <label class="toggle-row"><span>Bật đăng ký mới</span><input type="checkbox" checked /></label>
-            <button class="primary-btn full" type="button"><i class="ri-save-3-line"></i>Lưu cài đặt</button>
-          </article>
-          <article class="panel editor-panel">
-            <div class="panel-header compact"><div><p>SEO</p><h2>Meta mặc định</h2></div></div>
-            <label>Meta title<input type="text" value="Truyện Audio - Nghe truyện Việt Nam" /></label>
-            <label>Meta description<textarea rows="4">Kho truyện audio chọn lọc, nghe mọi lúc mọi nơi.</textarea></label>
-            <label>OG image<input type="text" value="/images/og-default.jpg" /></label>
-            <label>Robots<select><option>index,follow</option><option>noindex,nofollow</option></select></label>
-          </article>
-        </section>
+          <!-- 8. SYSTEM SETTINGS -->
+          <div v-else-if="activeSection === 'settings'" key="settings">
+            <AdminSettingManager />
+          </div>
+        </transition>
       </div>
-    </section>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { useAdminDashboard } from '@/admin/useAdminDashboard'
+import { ref, reactive, computed, onMounted } from 'vue'
 import AdminSidebar from '@/admin/components/AdminSidebar.vue'
 import AdminTopbar from '@/admin/components/AdminTopbar.vue'
+import AdminStatsCard from '@/admin/components/AdminStatsCard.vue'
+import AdminSeriesManager from '@/admin/components/AdminSeriesManager.vue'
+import AdminHotOrderManager from '@/admin/components/AdminHotOrderManager.vue'
+import AdminEpisodeManager from '@/admin/components/AdminEpisodeManager.vue'
+import AdminUserManager from '@/admin/components/AdminUserManager.vue'
+import AdminOrderManager from '@/admin/components/AdminOrderManager.vue'
+import AdminSyncManager from '@/admin/components/AdminSyncManager.vue'
+import AdminCommunityManager from '@/admin/components/AdminCommunityManager.vue'
+import AdminSettingManager from '@/admin/components/AdminSettingManager.vue'
+import AdminService from '@/services/AdminService'
+import { extractApiPayload } from '@/utils/helpers'
 
-const {
-  sidebarOpen,
-  search,
-  activeSection,
-  activeFilter,
-  menuItems,
-  metrics,
-  statusFilters,
-  stories,
-  episodes,
-  categories,
-  tags,
-  users,
-  orders,
-  crawlJobs,
-  comments,
-  uploadJobs,
-  plans,
-  currentTitle,
-  filteredStories
-} = useAdminDashboard()
+const sidebarOpen = ref(false)
+const activeSection = ref('dashboard')
+const jumpSeriesId = ref('')
+const seriesManagerRef = ref(null)
+
+const menuGroups = [
+  {
+    title: 'Tổng quan',
+    items: [
+      { id: 'dashboard', label: 'Bảng điều khiển', icon: 'ri-dashboard-2-line' },
+    ],
+  },
+  {
+    title: 'Nội Dung & Studio',
+    items: [
+      { id: 'series', label: 'Kho truyện audio', icon: 'ri-book-open-line' },
+      { id: 'hot-order', label: 'Sắp xếp Truyện Hot', icon: 'ri-fire-fill', isHot: true },
+      { id: 'episodes', label: 'Tập truyện & Audio', icon: 'ri-play-circle-line' },
+    ],
+  },
+  {
+    title: 'Kinh Doanh & Thành Viên',
+    items: [
+      { id: 'orders', label: 'Đơn hàng & Gói cước', icon: 'ri-vip-crown-line' },
+      { id: 'users', label: 'Người dùng & VIP', icon: 'ri-user-3-line' },
+      { id: 'comments', label: 'Kiểm duyệt & Thảo luận', icon: 'ri-discuss-line' },
+    ],
+  },
+  {
+    title: 'Hệ Thống & Vận Hành',
+    items: [
+      { id: 'sync', label: 'Đồng bộ Supabase & Crawl', icon: 'ri-cloud-line' },
+      { id: 'settings', label: 'Cài đặt hệ thống', icon: 'ri-settings-3-line' },
+    ],
+  },
+]
+
+const currentTitle = computed(() => {
+  for (const group of menuGroups) {
+    const item = group.items.find((m) => m.id === activeSection.value)
+    if (item) return item.label
+  }
+  return 'Quản trị'
+})
+
+const dashboardData = reactive({
+  metrics: {
+    total_series: 0,
+    total_episodes: 0,
+    total_users: 0,
+    total_comments: 0,
+    total_revenue: 0,
+  },
+  top_series: [],
+  recent_orders: [],
+  recent_comments: [],
+  plan_stats: [],
+  category_stats: [],
+})
+
+function onSectionChange(sectionId) {
+  activeSection.value = sectionId
+  sidebarOpen.value = false
+  if (sectionId === 'dashboard') {
+    fetchDashboardData()
+  }
+}
+
+function handleManageEpisodes(seriesId) {
+  jumpSeriesId.value = seriesId
+  activeSection.value = 'episodes'
+}
+
+function openAddSeries() {
+  activeSection.value = 'series'
+  setTimeout(() => {
+    if (seriesManagerRef.value?.openCreateModal) {
+      seriesManagerRef.value.openCreateModal()
+    }
+  }, 100)
+}
+
+async function fetchDashboardData() {
+  try {
+    const res = await AdminService.getDashboardStats()
+    const payload = extractApiPayload(res)
+    if (payload) {
+      Object.assign(dashboardData, payload)
+    }
+  } catch (err) {
+    console.error('Failed to load dashboard data', err)
+  }
+}
+
+function formatCurrency(amount) {
+  return Number(amount || 0).toLocaleString('vi-VN') + 'đ'
+}
+
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+  return num
+}
+
+onMounted(() => {
+  fetchDashboardData()
+})
 </script>
 
 <style>
 @import '../../css/admin/admin.css';
 </style>
-
