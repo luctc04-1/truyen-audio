@@ -165,7 +165,7 @@
 
 <script setup>
 import { ref, computed, reactive, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import { setSeoMeta } from '@/utils/seo'
@@ -187,6 +187,7 @@ const normalizeStory = (story) => ({
 })
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 
@@ -299,6 +300,9 @@ const loadPosts = async (append = false) => {
     const items = data.items ?? []
     posts.value = append ? [...posts.value, ...items] : items
     lastPage.value = data.pagination?.last_page ?? 1
+    if (!append) {
+      handleTargetNavigation()
+    }
   } catch {
     toast.error('Không tải được bài viết')
   } finally {
@@ -668,6 +672,39 @@ const clearSeries = () => {
   }
 }
 
+const handleTargetNavigation = async () => {
+  const postId = route.query.post_id || (route.hash?.startsWith('#post-') ? route.hash.replace('#post-', '') : null)
+  const commentId = route.query.comment_id || (route.hash?.startsWith('#comment-') ? route.hash.replace('#comment-', '') : null)
+
+  if (!postId && !commentId) return
+
+  if (postId) {
+    const post = posts.value.find((p) => p.id === postId)
+    if (post && commentId && expandedPostId.value !== postId) {
+      await toggleComments(post)
+    }
+
+    setTimeout(() => {
+      if (commentId) {
+        const commentEl = document.getElementById('comment-' + commentId)
+        if (commentEl) {
+          commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          commentEl.classList.add('highlight-target-comment')
+          setTimeout(() => commentEl.classList.remove('highlight-target-comment'), 3500)
+          return
+        }
+      }
+
+      const postEl = document.getElementById('post-' + postId)
+      if (postEl) {
+        postEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        postEl.classList.add('highlight-target-post')
+        setTimeout(() => postEl.classList.remove('highlight-target-post'), 3500)
+      }
+    }, 450)
+  }
+}
+
 onMounted(() => {
   loadPosts()
   setSeoMeta({
@@ -682,6 +719,10 @@ onMounted(() => {
       'url': window.location.origin + '/community'
     }
   })
+})
+
+watch([() => route.query.post_id, () => route.query.comment_id, () => route.hash], () => {
+  handleTargetNavigation()
 })
 </script>
 
@@ -799,4 +840,27 @@ onMounted(() => {
 .btn-outline { background: transparent; border: 1px solid var(--border-strong); color: var(--text); height: 40px; padding: 0 20px; font-size: 14px; }
 .btn-outline:hover:not(:disabled) { background: var(--bg-muted); }
 .btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@keyframes targetHighlight {
+  0% {
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.85), 0 0 20px rgba(168, 85, 247, 0.5);
+    border-color: var(--primary);
+    background-color: rgba(168, 85, 247, 0.18);
+  }
+  70% {
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5), 0 0 12px rgba(168, 85, 247, 0.25);
+    border-color: var(--primary);
+    background-color: rgba(168, 85, 247, 0.08);
+  }
+  100% {
+    box-shadow: none;
+    background-color: transparent;
+  }
+}
+
+:deep(.highlight-target-post),
+.highlight-target-post {
+  animation: targetHighlight 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  border-radius: var(--radius-md) !important;
+}
 </style>

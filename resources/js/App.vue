@@ -12,6 +12,7 @@
     <NowPlaying />
     <AuthOverlay />
     <AppToast />
+    <WebPushPrompt />
 
     <!-- SOCIAL FLOAT -->
     <Teleport to="body">
@@ -38,6 +39,7 @@ import AudioPlayer from './components/AudioPlayer.vue'
 import NowPlaying from './components/NowPlaying.vue'
 import AuthOverlay from './components/AuthOverlay.vue'
 import AppToast from './components/AppToast.vue'
+import WebPushPrompt from './components/WebPushPrompt.vue'
 import { useAudioStore } from '@/stores/audioStore'
 import { applyThemeToDocument } from '@/utils/theme'
 

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Plan;
 use App\Models\User;
 use App\Modules\Auth\Services\AuthService;
+use App\Modules\Notification\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PayOS\Exceptions\APIException;
@@ -17,6 +18,7 @@ class OrderService
         protected PayOsService $payOsService,
         protected SubscriptionService $subscriptionService,
         protected AuthService $authService,
+        protected NotificationService $notificationService,
     ) {}
 
     /**
@@ -99,6 +101,12 @@ class OrderService
                     'end_at'    => $subscription->end_at?->toIso8601String(),
                 ],
             );
+
+            try {
+                $this->notificationService->sendVipPaymentSuccess($order->user, $order->plan, $order);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to create VIP payment notification', ['error' => $e->getMessage()]);
+            }
 
             return $order->fresh();
         });

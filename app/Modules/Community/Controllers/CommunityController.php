@@ -7,6 +7,7 @@ use App\Models\CommunityPostComment;
 use App\Models\CommunityPostCommentLike;
 use App\Models\CommunityPostLike;
 use App\Models\User;
+use App\Modules\Notification\Services\NotificationService;
 use App\Modules\Series\Support\UserPresenter;
 use App\Shared\Controllers\BaseController;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,10 @@ use Illuminate\Validation\ValidationException;
 
 class CommunityController extends BaseController
 {
+    public function __construct(
+        protected NotificationService $notificationService,
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -95,6 +100,19 @@ class CommunityController extends BaseController
                 'post_id' => $post->id,
             ]);
             $liked = true;
+
+            if ($post->user_id !== $user->id) {
+                try {
+                    $this->notificationService->sendCommunityPostLike(
+                        actor: $user,
+                        postAuthorId: $post->user_id,
+                        postId: $post->id,
+                        postSnippet: $post->content,
+                    );
+                } catch (\Throwable $e) {
+                    // Ignore notification failure
+                }
+            }
         }
 
         return $this->success([
@@ -205,6 +223,28 @@ class CommunityController extends BaseController
         $comment->likes_count = 0;
         $comment->setAttribute('liked_by_me', false);
         $comment->setRelation('replies', collect());
+
+        try {
+            if ($parentId && isset($parent) && $parent->user_id !== $user->id) {
+                $this->notificationService->sendCommunityCommentReply(
+                    actor: $user,
+                    parentAuthorId: $parent->user_id,
+                    postId: $post->id,
+                    replySnippet: $comment->content,
+                    commentId: $comment->id,
+                );
+            } elseif (! $parentId && $post->user_id !== $user->id) {
+                $this->notificationService->sendCommunityPostComment(
+                    actor: $user,
+                    postAuthorId: $post->user_id,
+                    postId: $post->id,
+                    commentSnippet: $comment->content,
+                    commentId: $comment->id,
+                );
+            }
+        } catch (\Throwable $e) {
+            // Ignore notification failure to avoid breaking comment creation
+        }
 
         return $this->success(
             $this->formatComment($comment, includeReplies: ! $parentId),
@@ -336,6 +376,20 @@ class CommunityController extends BaseController
                 'comment_id' => $comment->id,
             ]);
             $liked = true;
+
+            if ($comment->user_id !== $user->id) {
+                try {
+                    $this->notificationService->sendCommunityCommentLike(
+                        actor: $user,
+                        commentAuthorId: $comment->user_id,
+                        postId: $comment->post_id,
+                        commentSnippet: $comment->content,
+                        commentId: $comment->id,
+                    );
+                } catch (\Throwable $e) {
+                    // Ignore notification failure
+                }
+            }
         }
 
         return $this->success([
