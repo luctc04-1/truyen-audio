@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import AuthService from '@/services/AuthService';
 import { useToastStore } from '@/stores/toastStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { extractApiPayload } from '@/utils/helpers';
 import { getEcho, disconnectEcho } from '@/services/echo';
 
@@ -49,6 +50,11 @@ export const useAuthStore = defineStore('auth', () => {
         if (token.value) {
             localStorage.setItem('auth_token', token.value);
             getEcho(token.value);
+            if (user.value?.id) {
+                const notifStore = useNotificationStore();
+                notifStore.fetchUnreadCount();
+                notifStore.initRealtime(user.value.id, token.value);
+            }
         }
     };
 
@@ -142,6 +148,11 @@ export const useAuthStore = defineStore('auth', () => {
 
         user.value = extractApiPayload(await AuthService.me());
         getEcho(token.value);
+        if (user.value?.id) {
+            const notifStore = useNotificationStore();
+            notifStore.fetchUnreadCount();
+            notifStore.initRealtime(user.value.id, token.value);
+        }
         return user.value;
     };
 
@@ -177,6 +188,7 @@ export const useAuthStore = defineStore('auth', () => {
             token.value = null;
             localStorage.removeItem('auth_token');
             disconnectEcho();
+            useNotificationStore().reset();
             resetLoadingIfIdle();
         }
     };

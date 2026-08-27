@@ -1,5 +1,5 @@
 <template>
-  <div :class="['comment-item', { nested: isReply, busy: isDeleting }]">
+  <div :id="'comment-' + comment.id" :class="['comment-item', { nested: isReply, busy: isDeleting }]">
     <div v-if="isDeleting" class="comment-busy-overlay" aria-hidden="true">
       <span class="comment-spinner"></span>
     </div>
@@ -434,5 +434,28 @@ const saveEdit = async () => {
 
 .btn-sm {
   height: 32px;
+}
+
+@keyframes targetHighlight {
+  0% {
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.85), 0 0 20px rgba(168, 85, 247, 0.5);
+    border-color: var(--primary);
+    background-color: rgba(168, 85, 247, 0.18);
+  }
+  70% {
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5), 0 0 12px rgba(168, 85, 247, 0.25);
+    border-color: var(--primary);
+    background-color: rgba(168, 85, 247, 0.08);
+  }
+  100% {
+    box-shadow: none;
+    background-color: transparent;
+  }
+}
+
+:deep(.highlight-target-comment),
+.highlight-target-comment {
+  animation: targetHighlight 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  border-radius: var(--radius-sm) !important;
 }
 </style>
