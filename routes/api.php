@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Admin\Controllers\AdminCommentController;
+use Illuminate\Support\Facades\Route;
 use App\Modules\Admin\Controllers\AdminCommunityController;
 use App\Modules\Admin\Controllers\AdminDashboardController;
 use App\Modules\Admin\Controllers\AdminEpisodeController;
@@ -126,9 +126,6 @@ Route::middleware('jwt.optional')->prefix('notifications')->group(function () {
     Route::post('/push-subscribe', [NotificationController::class, 'subscribePush']);
     Route::post('/push-unsubscribe', [NotificationController::class, 'unsubscribePush']);
 });
-
-// ─── Admin: Đồng bộ dữ liệu từ Supabase ──────────────────────────────────
-Route::prefix('admin/sync')->group(function () {
 
 // ─── Admin Management API ───────────────────────────────────────────────
 Route::prefix('admin')->group(function () {

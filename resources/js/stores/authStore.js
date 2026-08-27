@@ -156,23 +156,35 @@ export const useAuthStore = defineStore('auth', () => {
         return user.value;
     };
 
+    let bootstrapPromise = null;
+
     const bootstrap = async () => {
         if (bootstrapped.value) {
             return;
         }
 
-        bootstrapped.value = true;
-
-        if (!token.value) {
-            return;
+        if (bootstrapPromise) {
+            return bootstrapPromise;
         }
 
-        try {
-            await fetchMe();
-            getEcho(token.value);
-        } catch {
-            await logout();
-        }
+        bootstrapPromise = (async () => {
+            if (!token.value) {
+                bootstrapped.value = true;
+                return;
+            }
+
+            try {
+                await fetchMe();
+                getEcho(token.value);
+            } catch {
+                await logout();
+            } finally {
+                bootstrapped.value = true;
+                bootstrapPromise = null;
+            }
+        })();
+
+        return bootstrapPromise;
     };
 
     const logout = async () => {
