@@ -13,6 +13,12 @@
     <meta name="description" content="{{ $seoDescription ?? 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, trinh thám mượt mà chất lượng cao.' }}">
     <meta name="keywords" content="{{ $seoKeywords ?? 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay' }}">
 
+    <!-- Icons & Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
     <!-- OpenGraph / Facebook / Zalo -->
     <meta property="og:type" content="{{ $seoOgType ?? 'website' }}">
     <meta property="og:site_name" content="Truyện Audio Hay">

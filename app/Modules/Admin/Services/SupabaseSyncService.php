@@ -24,13 +24,30 @@ class SupabaseSyncService
         $this->batchSize = (int) env('SUPABASE_BATCH_SIZE', 1000);
     }
 
+    /**
+     * Cho phép gán hoặc ghi đè SUPABASE_AUTH_KEY từ UI frontend
+     */
+    public function setAuthKey(?string $authKey): self
+    {
+        if ($authKey !== null && trim($authKey) !== '') {
+            $this->authKey = trim($authKey);
+        }
+        return $this;
+    }
+
     // ─── Sync Series ─────────────────────────────────────────────────────────
 
     /**
      * Lấy series từ Supabase theo trang và upsert vào DB local
      */
-    public function syncSeries(): array
+    public function syncSeries(?string $authKey = null): array
     {
+        $this->setAuthKey($authKey);
+
+        if (empty($this->authKey)) {
+            throw new \InvalidArgumentException('Thiếu SUPABASE_AUTH_KEY. Vui lòng nhập key trên giao diện hoặc cấu hình trong .env');
+        }
+
         $result = ['total' => 0, 'inserted' => 0, 'updated' => 0];
 
         $this->fetchPaginated('/rest/v1/series', ['select' => '*'], function (array $page) use (&$result) {
@@ -56,9 +73,16 @@ class SupabaseSyncService
      * Lấy episodes từ Supabase theo trang và upsert vào DB local
      *
      * @param string|null $seriesId  Nếu có → chỉ sync episodes của series đó
+     * @param string|null $authKey   Nếu truyền vào → dùng key này thay vì env
      */
-    public function syncEpisodes(?string $seriesId = null): array
+    public function syncEpisodes(?string $seriesId = null, ?string $authKey = null): array
     {
+        $this->setAuthKey($authKey);
+
+        if (empty($this->authKey)) {
+            throw new \InvalidArgumentException('Thiếu SUPABASE_AUTH_KEY. Vui lòng nhập key trên giao diện hoặc cấu hình trong .env');
+        }
+
         $params = ['select' => '*'];
 
         if ($seriesId) {
@@ -119,12 +143,16 @@ class SupabaseSyncService
 
     /**
      * Sync toàn bộ series rồi episodes
+     * 
+     * @param string|null $authKey Nếu truyền vào → dùng key này thay vì env
      */
-    public function syncAll(): array
+    public function syncAll(?string $authKey = null): array
     {
+        $this->setAuthKey($authKey);
+
         return [
-            'series' => $this->syncSeries(),
-            'episodes' => $this->syncEpisodes(),
+            'series' => $this->syncSeries($this->authKey),
+            'episodes' => $this->syncEpisodes(null, $this->authKey),
         ];
     }
 
