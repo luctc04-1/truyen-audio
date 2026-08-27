@@ -1,5 +1,5 @@
 <template>
-  <div :class="['community-comment', { nested: isReply }]">
+  <div :id="'comment-' + comment.id" :class="['community-comment', { nested: isReply }]">
     <div class="comment-header">
       <UserAvatar :user="comment.user" :size="isReply ? 'sm' : 'md'" />
       <div class="comment-meta">
@@ -363,7 +363,28 @@ const vClickOutside = {
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btn-outline { background: transparent; border: 1px solid var(--border-strong); color: var(--text); height: 34px; padding: 0 14px; font-size: 13px; }
-.btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
-
 .btn-sm { height: 30px; padding: 0 12px; font-size: 12px; }
+
+@keyframes targetHighlight {
+  0% {
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.85), 0 0 20px rgba(168, 85, 247, 0.5);
+    border-color: var(--primary);
+    background-color: rgba(168, 85, 247, 0.18);
+  }
+  70% {
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5), 0 0 12px rgba(168, 85, 247, 0.25);
+    border-color: var(--primary);
+    background-color: rgba(168, 85, 247, 0.08);
+  }
+  100% {
+    box-shadow: none;
+    background-color: transparent;
+  }
+}
+
+:deep(.highlight-target-comment),
+.highlight-target-comment {
+  animation: targetHighlight 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  border-radius: var(--radius-sm) !important;
+}
 </style>

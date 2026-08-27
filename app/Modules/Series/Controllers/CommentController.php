@@ -6,6 +6,7 @@ use App\Models\Comment;
 use App\Models\CommentLike;
 use App\Models\Series;
 use App\Models\User;
+use App\Modules\Notification\Services\NotificationService;
 use App\Modules\Series\Support\UserPresenter;
 use App\Shared\Controllers\BaseController;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class CommentController extends BaseController
 {
+    public function __construct(
+        protected NotificationService $notificationService,
+    ) {}
+
     public function index(Request $request, string $seriesId): JsonResponse
     {
         if (! Series::whereKey($seriesId)->exists()) {
@@ -93,6 +98,23 @@ class CommentController extends BaseController
 
         $this->hydrateComment($comment, $user, likedByMe: false);
 
+        if ($parentId && isset($parent) && $parent->user_id !== $user->id) {
+            $series = Series::query()->select('id', 'title')->find($seriesId);
+            $seriesTitle = $series?->title ?? 'Truyện Audio';
+            try {
+                $this->notificationService->sendStoryCommentReply(
+                    actor: $user,
+                    recipientUserId: $parent->user_id,
+                    seriesId: $seriesId,
+                    seriesTitle: $seriesTitle,
+                    replySnippet: $comment->content,
+                    commentId: $comment->id,
+                );
+            } catch (\Throwable $e) {
+                // Ignore notification failure to not block comment
+            }
+        }
+
         return $this->success(
             $this->formatComment($comment, includeReplies: ! $parentId),
             'Gửi bình luận thành công',
@@ -124,6 +146,23 @@ class CommentController extends BaseController
                 'comment_id' => $comment->id,
             ]);
             $liked = true;
+
+            if ($comment->user_id !== $user->id) {
+                $series = Series::query()->select('id', 'title')->find($comment->series_id);
+                $seriesTitle = $series?->title ?? 'Truyện Audio';
+                try {
+                    $this->notificationService->sendStoryCommentLike(
+                        actor: $user,
+                        recipientUserId: $comment->user_id,
+                        seriesId: $comment->series_id,
+                        seriesTitle: $seriesTitle,
+                        commentSnippet: $comment->content,
+                        commentId: $comment->id,
+                    );
+                } catch (\Throwable $e) {
+                    // Ignore notification failure
+                }
+            }
         }
 
         return $this->success([

@@ -23,6 +23,8 @@ class Notification extends Model
         'type',
         'reference_type',
         'reference_id',
+        'action_url',
+        'created_at',
     ];
 
     protected function casts(): array

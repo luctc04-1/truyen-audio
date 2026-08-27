@@ -1,5 +1,5 @@
 <template>
-  <div class="post-card">
+  <div :id="'post-' + post.id" class="post-card">
     <div class="post-header">
       <UserAvatar :user="post.user" />
       <div class="post-author-meta">

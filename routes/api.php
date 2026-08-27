@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Modules\Admin\Controllers\SyncController;
 use App\Modules\Auth\Controllers\AuthController;
 use App\Modules\Community\Controllers\CommunityController;
+use App\Modules\Notification\Controllers\NotificationController;
 use App\Modules\Payment\Controllers\OrderController;
 use App\Modules\Payment\Controllers\PayOsWebhookController;
 use App\Modules\Plan\Controllers\PlanController;
@@ -100,6 +101,22 @@ Route::middleware('jwt.auth')->group(function () {
     Route::patch('/comments/{id}', [CommentController::class, 'update']);
     Route::patch('/comments/{id}/pin', [CommentController::class, 'pin']);
     Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
+});
+
+// ─── Thông báo (yêu cầu đăng nhập) ──────────────────────────────────────
+Route::middleware('jwt.auth')->prefix('notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/', [NotificationController::class, 'destroyAll']);
+});
+
+// ─── Web Push Subscriptions (hỗ trợ cả khách & thành viên) ───────────────
+Route::middleware('jwt.optional')->prefix('notifications')->group(function () {
+    Route::post('/push-subscribe', [NotificationController::class, 'subscribePush']);
+    Route::post('/push-unsubscribe', [NotificationController::class, 'unsubscribePush']);
 });
 
 // ─── Admin: Đồng bộ dữ liệu từ Supabase ──────────────────────────────────

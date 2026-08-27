@@ -22,6 +22,7 @@ class UserNotification extends Model
         'notification_id',
         'is_read',
         'read_at',
+        'created_at',
     ];
 
     protected function casts(): array

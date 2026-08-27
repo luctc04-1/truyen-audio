@@ -106,7 +106,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, provide, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import ReviewService from '@/services/ReviewService'
@@ -120,6 +120,7 @@ const props = defineProps({
 })
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 
@@ -141,6 +142,20 @@ const deletingCommentId = ref(null)
 const likingCommentIds = reactive(new Set())
 
 const hasMore = computed(() => page.value < lastPage.value)
+
+const scrollToTargetComment = () => {
+  const commentId = route.query.comment_id || (route.hash ? route.hash.replace('#comment-', '') : null)
+  if (!commentId) return
+
+  setTimeout(() => {
+    const el = document.getElementById('comment-' + commentId)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('highlight-target-comment')
+      setTimeout(() => el.classList.remove('highlight-target-comment'), 3500)
+    }
+  }, 400)
+}
 
 const sortItems = () => {
   items.value = [...items.value].sort((a, b) => {
@@ -164,6 +179,9 @@ const load = async (append = false) => {
     items.value = append ? [...items.value, ...newItems] : newItems
     lastPage.value = data.pagination?.last_page ?? 1
     total.value = data.pagination?.total_all ?? data.pagination?.total ?? newItems.length
+    if (!append) {
+      scrollToTargetComment()
+    }
   } catch {
     toast.error('Không tải được bình luận')
   } finally {
@@ -320,6 +338,9 @@ const goAuth = () => router.push('/auth')
 
 onMounted(() => load())
 watch(() => props.seriesId, () => load())
+watch([() => route.query.comment_id, () => route.hash], () => {
+  scrollToTargetComment()
+})
 </script>
 
 <style scoped>
