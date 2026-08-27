@@ -11,6 +11,9 @@ app.use(pinia)
 app.use(router)
 
 const auth = useAuthStore()
-auth.bootstrap().finally(() => {
+Promise.all([
+  auth.bootstrap(),
+  router.isReady(),
+]).finally(() => {
   app.mount('#app')
 })
