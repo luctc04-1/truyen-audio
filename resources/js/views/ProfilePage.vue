@@ -259,13 +259,19 @@
                       <div class="settings-hint">Nhận thông báo khi có truyện mới cập nhật</div>
                     </div>
                   </div>
-                  <div class="toggle-switch" :class="{ active: pushEnabled }" @click="pushEnabled = !pushEnabled">
+                  <div class="toggle-switch" :class="{ active: pushEnabled, disabled: pushLoading }" @click="togglePush">
                     <div class="toggle-slider"></div>
                   </div>
                 </div>
-                <button class="btn-test-push" style="margin-top:10px;margin-left:44px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                  Gửi push thử
+                <button
+                  class="btn-test-push"
+                  :disabled="testPushLoading"
+                  @click="handleTestPush"
+                  style="margin-top:10px;margin-left:44px;"
+                >
+                  <svg v-if="!testPushLoading" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                  <ButtonSpinner v-else :visible="true" text="" />
+                  <span>{{ testPushLoading ? 'Đang gửi...' : 'Gửi push thử' }}</span>
                 </button>
               </div>
 
@@ -337,6 +343,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useRouter } from 'vue-router'
 import AuthService from '@/services/AuthService'
+import { useWebPush } from '@/composables/useWebPush'
 import { extractApiPayload, SERIES_FALLBACK_COVER } from '@/utils/helpers'
 import { applyThemeToDocument } from '@/utils/theme'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -345,12 +352,20 @@ import ButtonSpinner from '@/components/ButtonSpinner.vue'
 const auth = useAuthStore()
 const toast = useToastStore()
 const router = useRouter()
+const {
+  pushEnabled,
+  pushLoading,
+  testPushLoading,
+  syncPushState,
+  listenPermissionChanges,
+  togglePush,
+  handleTestPush,
+} = useWebPush()
 
 const fallbackCover = SERIES_FALLBACK_COVER
 
 // ── UI state ──────────────────────────────────────────────────────────────
 const showLogoutConfirm = ref(false)
-const pushEnabled = ref(false)
 const theme = ref(localStorage.getItem('theme') || 'dark')
 const avatarBroken = ref(false)
 
@@ -414,6 +429,8 @@ onMounted(() => {
   auth.fetchMe().catch(() => {})
   loadList(AuthService.getHistory, history, historyLoading)
   loadList(AuthService.getFollowedSeries, followed, followedLoading)
+  syncPushState()
+  listenPermissionChanges()
 })
 
 // ── Edit profile ───────────────────────────────────────────────────────────
@@ -661,6 +678,11 @@ applyTheme(theme.value)
 .toggle-switch.active {
   background: var(--primary);
 }
+.toggle-switch.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .toggle-slider {
   width: 20px;
   height: 20px;
@@ -690,7 +712,11 @@ applyTheme(theme.value)
   cursor: pointer;
   transition: all 0.2s;
 }
-.btn-test-push:hover {
+.btn-test-push:hover:not(:disabled) {
   background: var(--border);
+}
+.btn-test-push:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

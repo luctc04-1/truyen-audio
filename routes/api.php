@@ -119,6 +119,7 @@ Route::middleware('jwt.auth')->prefix('notifications')->group(function () {
     Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
     Route::delete('/{id}', [NotificationController::class, 'destroy']);
     Route::delete('/', [NotificationController::class, 'destroyAll']);
+    Route::post('/test-push', [NotificationController::class, 'testPush'])->middleware('throttle:10,1');
 });
 
 // ─── Web Push Subscriptions (hỗ trợ cả khách & thành viên) ───────────────

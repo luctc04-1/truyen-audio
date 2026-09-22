@@ -193,11 +193,40 @@ class NotificationController extends BaseController
     public function unsubscribePush(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'endpoint' => 'required|string',
+            'endpoint' => 'nullable|string',
         ]);
 
-        \App\Models\PushSubscription::where('endpoint', $data['endpoint'])->delete();
+        $query = \App\Models\PushSubscription::query();
+        if (! empty($data['endpoint'])) {
+            $query->where('endpoint', $data['endpoint']);
+        } elseif ($request->user()) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        $query->delete();
 
         return $this->success(null, 'Đã hủy nhận thông báo đẩy');
+    }
+
+    /**
+     * Gửi thông báo thử nghiệm cho người dùng hiện tại.
+     */
+    public function testPush(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $userNotification = $this->notificationService->createForUser(
+            userId: $user->id,
+            title: '🔔 Thông báo thử nghiệm',
+            content: 'Tuyệt vời! Tính năng thông báo trên TruyenAudio đang hoạt động rất tốt.',
+            type: 'system',
+            referenceType: 'system',
+            referenceId: null,
+            actionUrl: '/profile',
+        );
+
+        return $this->success([
+            'notification' => $userNotification ? $this->notificationService->formatUserNotification($userNotification) : null,
+        ], 'Đã gửi thông báo thử nghiệm thành công');
     }
 }
