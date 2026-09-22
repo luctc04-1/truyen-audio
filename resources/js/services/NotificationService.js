@@ -64,8 +64,16 @@ class NotificationService {
     /**
      * Hủy đăng ký Web Push Notification
      */
-    async unsubscribePush(data) {
+    async unsubscribePush(data = {}) {
         const res = await ApiService.post('/notifications/push-unsubscribe', data);
+        return extractApiPayload(res);
+    }
+
+    /**
+     * Gửi thông báo thử nghiệm
+     */
+    async sendTestPush() {
+        const res = await ApiService.post('/notifications/test-push');
         return extractApiPayload(res);
     }
 }

@@ -37,17 +37,14 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useToastStore } from '@/stores/toastStore';
-import NotificationService from '@/services/NotificationService';
+import { useWebPush } from '@/composables/useWebPush';
 
 const visible = ref(false);
 const subscribing = ref(false);
 const toast = useToastStore();
+const { isPushSupported, subscribe, showLocalNotification } = useWebPush();
 
 const DISMISS_DAYS = 3; // Nhắc lại sau 3 ngày nếu bấm 'Để sau'
-
-const isPushSupported = () => {
-  return typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator;
-};
 
 const shouldShowPrompt = () => {
   if (!isPushSupported()) return false;
@@ -71,65 +68,18 @@ const handleLater = () => {
   visible.value = false;
 };
 
-const registerServiceWorker = async () => {
-  try {
-    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-    await navigator.serviceWorker.ready;
-    return registration;
-  } catch (err) {
-    console.warn('Service Worker registration failed:', err);
-    return null;
-  }
-};
-
 const handleSubscribe = async () => {
   if (!isPushSupported()) return;
 
   subscribing.value = true;
   try {
-    const permission = await Notification.requestPermission();
-    
-    if (permission === 'granted') {
-      const registration = await registerServiceWorker();
-      
-      // Gửi đăng ký về backend
-      try {
-        let endpoint = `browser-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        if (registration?.pushManager) {
-          try {
-            const existingSub = await registration.pushManager.getSubscription();
-            if (existingSub?.endpoint) {
-              endpoint = existingSub.endpoint;
-            }
-          } catch {
-            // Fallback to custom endpoint identifier
-          }
-        }
-
-        await NotificationService.subscribePush({ endpoint });
-      } catch {
-        // Silently continue
-      }
-
+    const success = await subscribe();
+    if (success) {
       visible.value = false;
       toast.success('Đã bật thông báo trình duyệt thành công!');
-
-      // Hiển thị thông báo chào mừng
-      try {
-        const welcomeOptions = {
-          body: 'Bạn sẽ nhận được thông báo khi có tập truyện mới và phản hồi bình luận.',
-          icon: '/favicon-32x32.png',
-          badge: '/favicon-16x16.png',
-        };
-
-        if (registration?.showNotification) {
-          registration.showNotification('🔔 Đã bật thông báo TruyenAudio!', welcomeOptions);
-        } else {
-          new Notification('🔔 Đã bật thông báo TruyenAudio!', welcomeOptions);
-        }
-      } catch {
-        // Ignore native notification display error
-      }
+      await showLocalNotification('🔔 Đã bật thông báo TruyenAudio!', {
+        body: 'Bạn sẽ nhận được thông báo khi có tập truyện mới và phản hồi bình luận.',
+      });
     } else {
       visible.value = false;
     }
