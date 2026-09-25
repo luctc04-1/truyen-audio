@@ -315,8 +315,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useGoogleAuth } from '@/composables/useGoogleAuth'
-import GoogleIcon from '@/components/GoogleIcon.vue'
-import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import GoogleIcon from '@/components/common/GoogleIcon.vue'
+import ButtonSpinner from '@/components/common/ButtonSpinner.vue'
 
 const auth = useAuthStore()
 const toast = useToastStore()

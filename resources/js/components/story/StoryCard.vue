@@ -28,7 +28,7 @@
 
 <script setup>
 import { ref, computed, watchEffect } from 'vue'
-import VipBadge from '@/components/VipBadge.vue'
+import VipBadge from '@/components/common/VipBadge.vue'
 
 const FALLBACK = 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&q=80'
 

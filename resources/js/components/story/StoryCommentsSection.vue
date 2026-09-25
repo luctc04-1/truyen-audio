@@ -111,9 +111,9 @@ import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import ReviewService from '@/services/ReviewService'
 import { findNestedComment, optimisticToggleLike } from '@/utils/commentHelpers'
-import CommentItem from '@/components/CommentItem.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import CommentItem from './CommentItem.vue'
+import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
+import ButtonSpinner from '@/components/common/ButtonSpinner.vue'
 
 const props = defineProps({
   seriesId: { type: String, required: true },

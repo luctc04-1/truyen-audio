@@ -165,9 +165,9 @@ import { useAuthStore } from '@/stores/authStore'
 import { setSeoMeta } from '@/utils/seo'
 import StoryService from '@/services/StoryService'
 import FollowService from '@/services/FollowService'
-import StoryCard from '@/components/StoryCard.vue'
-import StoryCardSkeleton from '@/components/StoryCardSkeleton.vue'
-import VipBadge from '@/components/VipBadge.vue'
+import StoryCard from '@/components/story/StoryCard.vue'
+import StoryCardSkeleton from '@/components/skeletons/StoryCardSkeleton.vue'
+import VipBadge from '@/components/common/VipBadge.vue'
 
 const FILTER_OPTIONS = [
   { id: 'all', label: 'Tất cả' },

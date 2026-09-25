@@ -4,12 +4,17 @@ namespace App\Modules\Admin\Controllers;
 
 use App\Models\Order;
 use App\Models\Subscription;
+use App\Models\User;
+use App\Modules\Payment\Services\SubscriptionService;
 use App\Shared\Controllers\BaseController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminOrderController extends BaseController
 {
+    public function __construct(
+        protected SubscriptionService $subscriptionService
+    ) {}
     public function index(Request $request): JsonResponse
     {
         $query = Order::query()->with(['user:id,username,email', 'plan:id,code,name,price,duration_days']);
@@ -56,16 +61,10 @@ class AdminOrderController extends BaseController
 
             // Grant subscription if not exists
             if ($order->plan && $order->user_id) {
-                $now = now();
-                $endAt = $now->copy()->addDays($order->plan->duration_days ?: 30);
-                Subscription::create([
-                    'user_id' => $order->user_id,
-                    'plan_id' => $order->plan_id,
-                    'order_id' => $order->id,
-                    'start_at' => $now,
-                    'end_at' => $endAt,
-                    'is_active' => true,
-                ]);
+                $user = User::find($order->user_id);
+                if ($user) {
+                    $this->subscriptionService->activateFromOrder($user, $order->plan, $order);
+                }
             }
         }
 

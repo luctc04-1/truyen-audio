@@ -2,17 +2,18 @@
 
 namespace App\Modules\Admin\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Models\Episode;
+use App\Models\Series;
 use App\Modules\Admin\Services\SupabaseSyncService;
+use App\Shared\Controllers\BaseController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class SyncController extends Controller
+class SyncController extends BaseController
 {
     public function __construct(
         private SupabaseSyncService $syncService
-    ) {
-    }
+    ) {}
 
     /**
      * POST /api/admin/sync/series
@@ -24,16 +25,9 @@ class SyncController extends Controller
             $authKey = $request->input('auth_key') ?: $request->input('supabase_auth_key');
             $result = $this->syncService->syncSeries($authKey);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Đồng bộ series thành công',
-                'data' => $result,
-            ]);
+            return $this->success($result, 'Đồng bộ series thành công');
         } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi đồng bộ series: ' . $e->getMessage(),
-            ], 500);
+            return $this->error('Lỗi khi đồng bộ series: ' . $e->getMessage(), 500);
         }
     }
 
@@ -49,16 +43,9 @@ class SyncController extends Controller
             $authKey = $request->input('auth_key') ?: $request->input('supabase_auth_key');
             $result = $this->syncService->syncEpisodes($seriesId, $authKey);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Đồng bộ episodes thành công',
-                'data' => $result,
-            ]);
+            return $this->success($result, 'Đồng bộ episodes thành công');
         } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi đồng bộ episodes: ' . $e->getMessage(),
-            ], 500);
+            return $this->error('Lỗi khi đồng bộ episodes: ' . $e->getMessage(), 500);
         }
     }
 
@@ -73,16 +60,9 @@ class SyncController extends Controller
             $authKey = $request->input('auth_key') ?: $request->input('supabase_auth_key');
             $result = $this->syncService->syncAll($authKey);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Đồng bộ toàn bộ dữ liệu thành công',
-                'data' => $result,
-            ]);
+            return $this->success($result, 'Đồng bộ toàn bộ dữ liệu thành công');
         } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi đồng bộ toàn bộ: ' . $e->getMessage(),
-            ], 500);
+            return $this->error('Lỗi khi đồng bộ toàn bộ: ' . $e->getMessage(), 500);
         }
     }
 
@@ -92,13 +72,10 @@ class SyncController extends Controller
      */
     public function status(): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'series_count' => \App\Models\Series::count(),
-                'episodes_count' => \App\Models\Episode::count(),
-                'supabase_url' => env('SUPABASE_URL'),
-            ],
+        return $this->success([
+            'series_count'   => Series::count(),
+            'episodes_count' => Episode::count(),
+            'supabase_url'   => env('SUPABASE_URL'),
         ]);
     }
 }

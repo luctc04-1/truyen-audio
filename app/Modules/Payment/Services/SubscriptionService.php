@@ -40,4 +40,35 @@ class SubscriptionService
             ]);
         });
     }
+
+    public function grantManualVip(User $user, int $days, ?string $planId = null): Subscription
+    {
+        return DB::transaction(function () use ($user, $days, $planId) {
+            $active = $user->subscriptions()
+                ->currentlyValid()
+                ->orderByDesc('end_at')
+                ->lockForUpdate()
+                ->first();
+
+            $startAt = now();
+            $endAt = ($active && $active->end_at?->isFuture())
+                ? $active->end_at->copy()->addDays($days)
+                : $startAt->copy()->addDays($days);
+
+            Subscription::query()
+                ->where('user_id', $user->id)
+                ->active()
+                ->update(['is_active' => false]);
+
+            return Subscription::create([
+                'user_id'    => $user->id,
+                'plan_id'    => $planId,
+                'order_id'   => null,
+                'start_at'   => $startAt,
+                'end_at'     => $endAt,
+                'is_active'  => true,
+                'created_at' => now(),
+            ]);
+        });
+    }
 }

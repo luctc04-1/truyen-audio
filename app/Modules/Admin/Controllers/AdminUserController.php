@@ -5,12 +5,16 @@ namespace App\Modules\Admin\Controllers;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Modules\Payment\Services\SubscriptionService;
 use App\Shared\Controllers\BaseController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminUserController extends BaseController
 {
+    public function __construct(
+        protected SubscriptionService $subscriptionService
+    ) {}
     public function index(Request $request): JsonResponse
     {
         $query = User::query()
@@ -93,16 +97,7 @@ class AdminUserController extends BaseController
         $days = (int) $validated['days'];
         $planId = $validated['plan_id'] ?? Plan::first()?->id;
 
-        $now = now();
-        $endAt = $now->copy()->addDays($days);
-
-        $subscription = Subscription::create([
-            'user_id' => $user->id,
-            'plan_id' => $planId,
-            'start_at' => $now,
-            'end_at' => $endAt,
-            'is_active' => true,
-        ]);
+        $subscription = $this->subscriptionService->grantManualVip($user, $days, $planId);
 
         return $this->success($subscription, "Đã cấp VIP {$days} ngày cho người dùng");
     }

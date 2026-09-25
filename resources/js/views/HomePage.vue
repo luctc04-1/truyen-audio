@@ -152,9 +152,9 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStoryStore } from '@/stores/storyStore'
 import { setSeoMeta } from '@/utils/seo'
-import StoryCard from '@/components/StoryCard.vue'
-import StoryCardSkeleton from '@/components/StoryCardSkeleton.vue'
-import LatestEpisodeRow from '@/components/LatestEpisodeRow.vue'
+import StoryCard from '@/components/story/StoryCard.vue'
+import StoryCardSkeleton from '@/components/skeletons/StoryCardSkeleton.vue'
+import LatestEpisodeRow from '@/components/story/LatestEpisodeRow.vue'
 
 const router = useRouter()
 const storyStore = useStoryStore()

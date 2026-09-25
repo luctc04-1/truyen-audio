@@ -8,8 +8,8 @@
 </template>
 
 <script setup>
-import VipBadge from '@/components/VipBadge.vue'
-import AdminBadge from '@/components/AdminBadge.vue'
+import VipBadge from './VipBadge.vue'
+import AdminBadge from './AdminBadge.vue'
 
 defineProps({
   user: { type: Object, default: null },

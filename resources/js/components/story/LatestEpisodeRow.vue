@@ -59,7 +59,7 @@ import { useStoryStore } from '@/stores/storyStore'
 import { useAudioStore } from '@/stores/audioStore'
 import { usePlayAccess } from '@/composables/usePlayAccess'
 import { formatEpisodeWithTitle } from '@/utils/helpers'
-import VipBadge from '@/components/VipBadge.vue'
+import VipBadge from '@/components/common/VipBadge.vue'
 
 const FALLBACK = 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&q=80'
 
