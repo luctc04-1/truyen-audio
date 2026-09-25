@@ -154,12 +154,12 @@ import { useToastStore } from '@/stores/toastStore'
 import { formatRelativeTime, SERIES_FALLBACK_COVER } from '@/utils/helpers'
 import { useLikePop } from '@/composables/useLikePop'
 import CommunityService from '@/services/CommunityService'
-import UserAvatar from '@/components/UserAvatar.vue'
-import UserNameRow from '@/components/UserNameRow.vue'
-import CommunityCommentItem from '@/components/CommunityCommentItem.vue'
-import CommunityCommentSkeleton from '@/components/CommunityCommentSkeleton.vue'
-import ButtonSpinner from '@/components/ButtonSpinner.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import UserAvatar from '@/components/common/UserAvatar.vue'
+import UserNameRow from '@/components/common/UserNameRow.vue'
+import CommunityCommentItem from './CommunityCommentItem.vue'
+import CommunityCommentSkeleton from '@/components/skeletons/CommunityCommentSkeleton.vue'
+import ButtonSpinner from '@/components/common/ButtonSpinner.vue'
+import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
 
 const props = defineProps({
   post: { type: Object, required: true },

@@ -78,9 +78,9 @@ import { useAuthStore } from '@/stores/authStore'
 import { useToastStore } from '@/stores/toastStore'
 import ReviewService from '@/services/ReviewService'
 import { formatRelativeTime } from '@/utils/helpers'
-import StarRating from '@/components/StarRating.vue'
-import VipBadge from '@/components/VipBadge.vue'
-import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import StarRating from '@/components/common/StarRating.vue'
+import VipBadge from '@/components/common/VipBadge.vue'
+import ButtonSpinner from '@/components/common/ButtonSpinner.vue'
 
 const props = defineProps({
   seriesId: { type: String, required: true },

@@ -59,7 +59,7 @@ const routes = [
   {
     path: '/admin',
     name: 'Admin',
-    component: () => import('@/views/AdminPage.vue'),
+    component: () => import('@/admin/AdminPage.vue'),
     meta: { title: 'Quản trị hệ thống', layout: 'admin', requiresAuth: true, requiresAdmin: true },
   },
   {

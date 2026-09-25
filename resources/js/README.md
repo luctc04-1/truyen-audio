@@ -7,29 +7,32 @@ Giao diện frontend Vue 3 cho ứng dụng nghe truyện audio.
 ```
 resources/
 ├── js/
-│   ├── App.vue                 # Component chính
-│   ├── main.js                 # Entry point
-│   ├── components/
-│   │   ├── AppHeader.vue       # Header navigation
-│   │   ├── AudioPlayer.vue     # Audio player
-│   │   └── StoryCard.vue       # Story card component
-│   ├── views/
-│   │   ├── HomePage.vue        # Trang chủ
-│   │   ├── LibraryPage.vue     # Kho truyện
-│   │   ├── StoryDetailPage.vue # Chi tiết truyện
-│   │   ├── EpisodePage.vue     # Phát audio
-│   │   ├── CommunityPage.vue   # Cộng đồng
-│   │   ├── VIPPage.vue         # VIP subscription
-│   │   └── ProfilePage.vue     # Profile
-│   ├── router/
-│   │   └── index.js            # Vue Router config
-│   └── stores/
-│       ├── storyStore.js       # Pinia story store
-│       └── userStore.js        # Pinia user store
+│   ├── App.vue                 # Shell layout gốc
+│   ├── main.js                 # Entry point duy nhất
+│   ├── admin/                  # Module quản trị khép kín
+│   │   ├── AdminPage.vue       # Trang Admin chính
+│   │   └── components/         # Các components quản trị
+│   ├── components/             # Components client chia theo domain
+│   │   ├── common/             # UI atoms (Badge, Avatar, StarRating, Spinner...)
+│   │   ├── feedback/           # Modals, Dialogs, Toasts, WebPush
+│   │   ├── layout/             # Header, AudioPlayer, NowPlaying, Notifications
+│   │   ├── skeletons/          # Loading skeletons
+│   │   ├── story/              # Story cards, episodes, reviews, comments
+│   │   ├── community/          # Bài đăng cộng đồng, bình luận thảo luận
+│   │   └── index.js            # Barrel re-export thuận tiện
+│   ├── views/                  # Client pages (Home, Library, StoryDetail, VIP...)
+│   ├── router/                 # Vue Router config với navigation guards
+│   ├── stores/                 # Pinia stores (auth, audio, story, notif, toast)
+│   ├── services/               # API Services & WebSocket (Echo)
+│   ├── composables/            # Composition API hooks tái sử dụng
+│   └── utils/                  # Helpers, SEO, Access control
 ├── css/
-│   └── app.css
+│   ├── variables.css           # Toàn bộ CSS variables (Dark/Light theme)
+│   ├── base.css                # CSS resets, fonts, custom scrollbars
+│   ├── app.css                 # File tổng hợp được bundle bởi Vite
+│   └── admin/                  # Stylesheet riêng cho Admin
 └── views/
-    └── app.blade.php           # Laravel blade template
+    └── app.blade.php           # Laravel blade template mount #app
 ```
 
 ## 🚀 Setup

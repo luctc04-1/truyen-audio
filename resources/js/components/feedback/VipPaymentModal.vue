@@ -79,7 +79,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import QRCode from 'qrcode'
-import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import ButtonSpinner from '@/components/common/ButtonSpinner.vue'
 
 const BIN_BANK_NAMES = {
   '970452': 'KienlongBank',

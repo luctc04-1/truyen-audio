@@ -125,10 +125,10 @@ import { computed, inject, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { formatRelativeTime } from '@/utils/helpers'
 import { useLikePop } from '@/composables/useLikePop'
-import UserAvatar from '@/components/UserAvatar.vue'
-import UserNameRow from '@/components/UserNameRow.vue'
-import ButtonSpinner from '@/components/ButtonSpinner.vue'
-import CommentItem from '@/components/CommentItem.vue'
+import UserAvatar from '@/components/common/UserAvatar.vue'
+import UserNameRow from '@/components/common/UserNameRow.vue'
+import ButtonSpinner from '@/components/common/ButtonSpinner.vue'
+import CommentItem from './CommentItem.vue'
 
 const props = defineProps({
   comment: { type: Object, required: true },

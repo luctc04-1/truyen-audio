@@ -177,7 +177,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAudioStore } from '@/stores/audioStore'
 import { usePlayAccess } from '@/composables/usePlayAccess'
 import { formatTime, formatEpisodeWithTitle } from '@/utils/helpers'
-import VipBadge from '@/components/VipBadge.vue'
+import VipBadge from '@/components/common/VipBadge.vue'
 
 const audio = useAudioStore()
 const { playBlocked, ensurePlayAccess } = usePlayAccess()

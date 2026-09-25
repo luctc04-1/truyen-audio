@@ -34,12 +34,12 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
-import AppHeader from './components/AppHeader.vue'
-import AudioPlayer from './components/AudioPlayer.vue'
-import NowPlaying from './components/NowPlaying.vue'
-import AuthOverlay from './components/AuthOverlay.vue'
-import AppToast from './components/AppToast.vue'
-import WebPushPrompt from './components/WebPushPrompt.vue'
+import AppHeader from '@/components/layout/AppHeader.vue'
+import AudioPlayer from '@/components/layout/AudioPlayer.vue'
+import NowPlaying from '@/components/layout/NowPlaying.vue'
+import AuthOverlay from '@/components/feedback/AuthOverlay.vue'
+import AppToast from '@/components/feedback/AppToast.vue'
+import WebPushPrompt from '@/components/feedback/WebPushPrompt.vue'
 import { useAudioStore } from '@/stores/audioStore'
 import { applyThemeToDocument } from '@/utils/theme'
 
@@ -53,162 +53,8 @@ applyThemeToDocument(localStorage.getItem('theme') || 'dark')
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-:root {
-  --bg: #09090b;
-  --bg-card: #111113;
-  --bg-muted: #18181b;
-  --border: #27272a;
-  --border-strong: #3f3f46;
-  --text: #fafafa;
-  --text-muted: #a1a1aa;
-  --text-faint: #71717a;
-  --primary: #a855f7;
-  --primary-hover: #9333ea;
-  --primary-light: rgba(168, 85, 247, 0.12);
-  --primary-light2: rgba(168, 85, 247, 0.06);
-  --primary-border: rgba(168, 85, 247, 0.4);
-  --primary-focus: rgba(168, 85, 247, 0.5);
-  --primary-light-border: rgba(168, 85, 247, 0.2);
-  --amber-light: rgba(245, 158, 11, 0.1);
-  --amber-ring: rgba(245, 158, 11, 0.18);
-  --amber-focus: rgba(245, 158, 11, 0.5);
-  --success: #22c55e;
-  --success-border: #16a34a;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --gradient-premium: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
-  --nav-height: 56px;
-  --player-height: 80px;
-  --container: 1200px;
-}
-
-[data-theme="light"] {
-  --bg: #ffffff;
-  --bg-card: #ffffff;
-  --bg-muted: #f4f4f5;
-  --border: #e4e4e7;
-  --border-strong: #d4d4d8;
-  --text: #18181b;
-  --text-muted: #71717a;
-  --text-faint: #a1a1aa;
-  --primary: #a855f7;
-  --primary-hover: #9333ea;
-  --primary-light: rgba(168, 85, 247, 0.12);
-  --primary-light2: rgba(168, 85, 247, 0.06);
-  --primary-border: rgba(168, 85, 247, 0.4);
-  --primary-focus: rgba(168, 85, 247, 0.4);
-  --primary-light-border: rgba(168, 85, 247, 0.2);
-  --amber-light: rgba(245, 158, 11, 0.12);
-  --amber-ring: rgba(245, 158, 11, 0.2);
-  --amber-focus: rgba(245, 158, 11, 0.4);
-  --success: #22c55e;
-  --success-border: #16a34a;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --gradient-premium: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  font-size: 16px;
-  scroll-behavior: smooth;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: clip;
-  max-width: 100%;
-}
-
-#app {
-  overflow-x: clip;
-  max-width: 100%;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  outline: none;
-}
-
-img {
-  max-width: 100%;
-  display: block;
-}
-
-ul {
-  list-style: none;
-}
-
-textarea,
-input {
-  font-family: inherit;
-  outline: none;
-}
-
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 99px;
-}
-
-/* Horizontal scroll — hide scrollbar, keep swipe/drag */
-.genre-scroll,
-.story-scroll,
-.write-tags,
-.post-filter-tabs,
-.scroll-x {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.genre-scroll::-webkit-scrollbar,
-.story-scroll::-webkit-scrollbar,
-.write-tags::-webkit-scrollbar,
-.post-filter-tabs::-webkit-scrollbar,
-.scroll-x::-webkit-scrollbar {
-  display: none;
-}
-
 .app {
+
   display: flex;
   flex-direction: column;
   min-height: 100vh;

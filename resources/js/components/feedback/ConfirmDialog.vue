@@ -54,7 +54,7 @@
 
 <script setup>
 import { useId } from 'vue'
-import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import ButtonSpinner from '@/components/common/ButtonSpinner.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

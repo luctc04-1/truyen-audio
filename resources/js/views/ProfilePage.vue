@@ -346,8 +346,8 @@ import AuthService from '@/services/AuthService'
 import { useWebPush } from '@/composables/useWebPush'
 import { extractApiPayload, SERIES_FALLBACK_COVER } from '@/utils/helpers'
 import { applyThemeToDocument } from '@/utils/theme'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import ButtonSpinner from '@/components/ButtonSpinner.vue'
+import ConfirmDialog from '@/components/feedback/ConfirmDialog.vue'
+import ButtonSpinner from '@/components/common/ButtonSpinner.vue'
 
 const auth = useAuthStore()
 const toast = useToastStore()
