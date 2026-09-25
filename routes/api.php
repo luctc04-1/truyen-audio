@@ -129,7 +129,7 @@ Route::middleware('jwt.optional')->prefix('notifications')->group(function () {
 });
 
 // ─── Admin Management API ───────────────────────────────────────────────
-Route::prefix('admin')->group(function () {
+Route::middleware('jwt.admin')->prefix('admin')->group(function () {
     // Dashboard Stats
     Route::get('dashboard/stats', [AdminDashboardController::class, 'stats']);
 

@@ -5,8 +5,6 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Modules\Admin\Repositories\Contracts\SyncRepositoryInterface;
 use App\Modules\Admin\Repositories\Eloquent\SyncRepository;
-use App\Modules\Story\Repositories\Contracts\StoryRepositoryInterface;
-use App\Modules\Story\Repositories\Eloquent\StoryRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -37,11 +35,6 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     protected function bindRepositories()
     {
-        // Story Repository
-        $this->app->bind(
-            StoryRepositoryInterface::class,
-            StoryRepository::class
-        );
 
         $this->app->bind(
             SyncRepositoryInterface::class,
