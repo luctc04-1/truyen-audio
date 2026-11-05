@@ -186,7 +186,7 @@ export const useNotificationStore = defineStore('notification', () => {
             try {
                 if (navigator.serviceWorker?.controller) {
                     navigator.serviceWorker.ready.then((reg) => {
-                        reg.showNotification(newNotif.title || 'Truyện Audio Hay', {
+                        reg.showNotification(newNotif.title || 'Truyện Audio 247', {
                             body: newNotif.content || 'Bạn có thông báo mới!',
                             icon: '/favicon-32x32.png',
                             badge: '/favicon-16x16.png',
@@ -197,7 +197,7 @@ export const useNotificationStore = defineStore('notification', () => {
                         });
                     });
                 } else {
-                    const n = new Notification(newNotif.title || 'Truyện Audio Hay', {
+                    const n = new Notification(newNotif.title || 'Truyện Audio 247', {
                         body: newNotif.content || 'Bạn có thông báo mới!',
                         icon: '/favicon-32x32.png',
                     });

@@ -190,9 +190,9 @@ onMounted(async () => {
   }
 
   setSeoMeta({
-    title: 'Nâng cấp VIP - Truyện Audio Hay Không Giới Hạn',
-    description: 'Đăng ký hội viên VIP để nghe không giới hạn tất cả các bộ truyện audio chất lượng cao, không quảng cáo, truy cập sớm tập mới trên Truyện Audio Hay.',
-    keywords: 'vip truyện audio, nâng cấp vip truyện, nghe truyện không quảng cáo, truyện audio vip',
+    title: 'Nâng cấp VIP - Truyện Audio 247 Không Giới Hạn',
+    description: 'Đăng ký hội viên VIP để nghe không giới hạn tất cả các bộ truyện audio chất lượng cao, không quảng cáo, truy cập sớm tập mới trên Truyện Audio 247 (truyenaudio247.com).',
+    keywords: 'vip truyện audio, nâng cấp vip truyện, nghe truyện không quảng cáo, truyện audio vip, truyện audio 247',
     schema: faqSchema
   })
 })

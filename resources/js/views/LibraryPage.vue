@@ -336,16 +336,16 @@ const updateLibrarySeo = () => {
   const genreLabel = genreId !== 'all' ? storyStore.getCategoryLabel(genreId) : ''
 
   const title = genreLabel
-    ? `Kho Truyện Audio ${genreLabel} Hay Chọn Lọc`
-    : 'Kho Truyện Audio Hay Chọn Lọc | Nghe Truyện Online'
+    ? `Truyện Audio ${genreLabel} Hay Chọn Lọc | Truyện Audio 247`
+    : 'Kho Truyện Audio Chọn Lọc | Truyện Audio 247'
 
   const description = genreLabel
-    ? `Danh sách đầy đủ các bộ truyện audio thể loại ${genreLabel} hay nhất chọn lọc, đọc truyện đêm khuya mượt mà chất lượng cao trên Truyện Audio Hay.`
-    : 'Kho truyện audio chọn lọc hay nhất - Đầy đủ các thể loại ngôn tình, tiên hiệp, kiếm hiệp, trinh thám mượt mà chất lượng cao.'
+    ? `Danh sách đầy đủ các bộ truyện audio thể loại ${genreLabel} hay nhất chọn lọc, đọc truyện đêm khuya mượt mà chất lượng cao trên Truyện Audio 247 (truyenaudio247.com).`
+    : 'Kho truyện audio chọn lọc hay nhất - Đầy đủ các thể loại ngôn tình, tiên hiệp, kiếm hiệp, trinh thám mượt mà chất lượng cao trên Truyện Audio 247.'
 
   const keywords = genreLabel
-    ? `truyện audio ${genreLabel.toLowerCase()}, nghe truyện ${genreLabel.toLowerCase()}, audio ${genreLabel.toLowerCase()} hay, kho truyện audio`
-    : 'kho truyện audio, nghe truyện audio, truyện ngôn tình, truyện tiên hiệp, truyện trinh thám'
+    ? `truyện audio ${genreLabel.toLowerCase()}, nghe truyện ${genreLabel.toLowerCase()}, audio ${genreLabel.toLowerCase()} hay, kho truyện audio, truyện audio 247`
+    : 'kho truyện audio, nghe truyện audio, truyện ngôn tình, truyện tiên hiệp, truyện trinh thám, truyện audio 247, truyenaudio247'
 
   const canonicalUrl = window.location.origin + '/library' + (genreId !== 'all' ? `?category=${genreId}` : '')
 

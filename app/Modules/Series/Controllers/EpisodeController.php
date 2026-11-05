@@ -21,11 +21,12 @@ class EpisodeController extends BaseController
             ->select([
                 'id', 'series_id', 'title', 'episode_number',
                 'duration_seconds', 'is_premium', 'play_count', 'listen_count',
-                'published_at', 'created_at',
+                'published_at', 'created_at', 'publish_at',
             ])
             ->with(['series:id,title,cover_url'])
             ->whereHas('series')
-            ->orderByDesc(DB::raw('COALESCE(published_at, created_at)'))
+            ->whereNotNull('publish_at')
+            ->orderByDesc('publish_at')
             ->limit($limit)
             ->get()
             ->map(fn (Episode $ep) => SeriesPresenter::episodeWithSeries($ep));

@@ -125,8 +125,8 @@ export const formatRelativeTime = (iso) => {
  */
 export const shareStory = async (story) => {
     const url = `${window.location.origin}/story/${story.slug || story.id}`;
-    const title = story.title ? `${story.title} - Truyện Audio Hay` : 'Truyện Audio Hay';
-    const text = `Nghe truyện audio ${story.title || ''} chọn lọc chất lượng cao trên Truyện Audio Hay`;
+    const title = story.title ? `${story.title} - Truyện Audio 247` : 'Truyện Audio 247'
+    const text = `Nghe truyện audio ${story.title || ''} chọn lọc chất lượng cao trên Truyện Audio 247 (truyenaudio247.com)`
 
     if (navigator.share) {
         try {
