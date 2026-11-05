@@ -156,9 +156,11 @@ class ApiService {
         const contentType = response.headers.get('content-type') || '';
 
         if (!contentType.includes('application/json')) {
-            throw new Error(
-                `API không trả JSON (${response.status}). Hãy mở qua Laragon hoặc cấu hình VITE_API_PROXY_TARGET.`
-            );
+            const isDev = Boolean(import.meta.env?.DEV);
+            const message = isDev
+                ? `API không trả JSON (${response.status}). Hãy mở qua Laragon hoặc cấu hình VITE_API_PROXY_TARGET.`
+                : `Không thể kết nối máy chủ dữ liệu (${response.status}). Vui lòng thử lại sau.`;
+            throw new Error(message);
         }
 
         const data = await response.json();
