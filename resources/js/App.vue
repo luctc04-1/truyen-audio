@@ -17,14 +17,14 @@
     <!-- SOCIAL FLOAT -->
     <Teleport to="body">
       <div v-if="!isAdminRoute" :class="['social-float', { 'social-float-raised': showMiniPlayer, 'social-float-auth': hideHeader }]">
-        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="social-btn fb" title="Facebook" aria-label="Facebook">
+        <a href="https://www.facebook.com/share/19GHXSjNzZ/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" class="social-btn fb" title="Facebook" aria-label="Facebook">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
         </a>
-        <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="social-btn tt" title="TikTok" aria-label="TikTok">
+        <a href="https://www.tiktok.com/@truyenaudio.247" target="_blank" rel="noopener noreferrer" class="social-btn tt" title="TikTok" aria-label="TikTok">
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
         </a>
-        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="social-btn yt" title="YouTube" aria-label="YouTube">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+        <a href="https://youtube.com/@truyenaudiohay.247?si=tw-HPl-IKhGmkKYq" target="_blank" rel="noopener noreferrer" class="social-btn yt" title="YouTube" aria-label="YouTube">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><polygon points="10 15 15 12 10 9" fill="currentColor"/></svg>
         </a>
       </div>
     </Teleport>
@@ -252,23 +252,61 @@ input {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
-  transition: transform 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
-  box-shadow: var(--shadow-md);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s, filter 0.2s;
   pointer-events: auto;
   flex-shrink: 0;
+  cursor: pointer;
+  text-decoration: none;
 }
 
-.social-btn:hover { transform: scale(1.08); }
-.social-btn.fb:hover { background: #1877f2; color: #fff; border-color: #1877f2; }
-.social-btn.tt:hover { background: #010101; color: #fff; border-color: #010101; }
-.social-btn.yt:hover { background: #ff0000; color: #fff; border-color: #ff0000; }
-.social-btn svg { width: 18px; height: 18px; }
+/* Luôn hiển thị màu sắc nhận diện thương hiệu của từng icon */
+.social-btn.fb {
+  background: #1877f2;
+  color: #ffffff;
+  border: 1px solid #1877f2;
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.45);
+}
+
+.social-btn.tt {
+  background: #010101;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.social-btn.yt {
+  background: #ff0000;
+  color: #ffffff;
+  border: 1px solid #ff0000;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.45);
+}
+
+.social-btn:hover {
+  transform: scale(1.14);
+  filter: brightness(1.12);
+}
+
+.social-btn.fb:hover {
+  box-shadow: 0 6px 18px rgba(24, 119, 242, 0.7);
+}
+
+.social-btn.tt:hover {
+  background: #111111;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.social-btn.yt:hover {
+  box-shadow: 0 6px 18px rgba(255, 0, 0, 0.7);
+}
+
+.social-btn svg {
+  width: 20px;
+  height: 20px;
+}
 
 @media (max-width: 768px) {
   .social-btn {

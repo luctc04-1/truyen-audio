@@ -3,7 +3,7 @@
     <!-- HERO -->
     <section class="hero">
       <div class="hero-bg">
-        <img :src="heroCover" alt="Truyện Audio Hay - Website Nghe Truyện Chọn Lọc Online" />
+        <img :src="heroCover" alt="Truyện Audio 247 - Nghe Truyện Audio Hay Online Miễn Phí" />
         <div class="hero-overlay"></div>
         <div class="hero-overlay2"></div>
       </div>
@@ -16,9 +16,10 @@
             Nội dung mới mỗi tuần
           </div>
           <h1 class="hero-title">
-            <span class="text-gradient">Truyện Audio Hay</span>
+            <span class="text-gradient">Truyện Audio 247</span>
+            <span class="hero-subline"> - Nghe Truyện Audio Hay Online</span>
           </h1>
-          <p class="hero-desc">Kho truyện audio chọn lọc ngôn tình, đọc truyện đêm khuya, trinh thám, kiếm hiệp và tiên hiệp chất lượng cao.</p>
+          <p class="hero-desc">Kho truyện audio chọn lọc miễn phí: ngôn tình, đọc truyện đêm khuya, trinh thám, kiếm hiệp và tiên hiệp chất lượng cao trên truyenaudio247.com.</p>
           <div class="hero-actions">
             <router-link to="/library">
               <button class="btn btn-lg btn-primary">
@@ -168,23 +169,23 @@ const heroCover = computed(
 onMounted(() => {
   storyStore.loadHome()
   setSeoMeta({
-    title: 'Trang chủ - Truyện Audio Hay Chọn Lọc Online',
-    description: 'Truyện Audio Hay - Kho truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, kiếm hiệp, trinh thám mượt mà chất lượng cao.',
-    keywords: 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay',
+    title: 'Truyện Audio 247 - Nghe Truyện Audio Hay Online Miễn Phí',
+    description: 'Truyện Audio 247 (truyenaudio247.com) - Nghe truyện audio online miễn phí với kho truyện phong phú: tiên hiệp, kiếm hiệp, ngôn tình, đọc truyện đêm khuya, trinh thám mượt mà chất lượng cao.',
+    keywords: 'truyện audio 247, truyenaudio247, nghe truyện audio, đọc truyện đêm khuya, nghe truyện online, audio truyện hay',
     schema: [
       {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
-        'name': 'Truyện Audio Hay',
-        'alternateName': 'Truyen Audio Hay',
+        'name': 'Truyện Audio 247',
+        'alternateName': 'Truyen Audio 247',
         'url': window.location.origin
       },
       {
         '@context': 'https://schema.org',
         '@type': 'Organization',
-        'name': 'Truyện Audio Hay',
+        'name': 'Truyện Audio 247',
         'url': window.location.origin,
-        'logo': window.location.origin + '/favicon.ico'
+        'logo': window.location.origin + '/android-chrome-512x512.png'
       }
     ]
   })

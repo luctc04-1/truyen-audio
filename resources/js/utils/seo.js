@@ -2,10 +2,11 @@
  * Utility for managing dynamic document title, meta tags, OpenGraph, Canonical link, and JSON-LD Schema on client side.
  */
 
-const DEFAULT_TITLE = 'Truyện Audio Hay | Nghe Truyện Hay Chọn Lọc Online'
-const DEFAULT_DESCRIPTION = 'Truyện Audio Hay - Website nghe truyện audio chọn lọc hay nhất, đọc truyện đêm khuya, ngôn tình, tiên hiệp, trinh thám mượt mà chất lượng cao.'
-const DEFAULT_KEYWORDS = 'truyện audio hay, nghe truyện audio, truyên audio hay, truyện đọc đêm khuya, nghe truyện online, audio truyện hay'
-const DEFAULT_IMAGE = '/favicon.ico'
+const BRAND_NAME = 'Truyện Audio 247'
+const DEFAULT_TITLE = 'Truyện Audio 247 - Nghe Truyện Audio Hay Online Miễn Phí'
+const DEFAULT_DESCRIPTION = 'Truyện Audio 247 (truyenaudio247.com) - Nghe truyện audio online miễn phí với kho truyện phong phú: tiên hiệp, kiếm hiệp, ngôn tình, đọc truyện đêm khuya, trinh thám mượt mà chất lượng cao.'
+const DEFAULT_KEYWORDS = 'truyện audio 247, truyenaudio247, nghe truyện audio, đọc truyện đêm khuya, nghe truyện online, audio truyện hay, truyện audio online'
+const DEFAULT_IMAGE = '/android-chrome-512x512.png'
 
 function setOrUpdateMeta(selector, attrName, attrValue, content) {
   let element = document.head.querySelector(selector)
@@ -28,7 +29,7 @@ function setOrUpdateLink(rel, href) {
 }
 
 function setOrUpdateJsonLd(schemaData) {
-  let script = document.getElementById('seo-jsonld')
+  let script = document.getElementById('seo-jsonld') || document.getElementById('server-seo-jsonld')
   if (!schemaData) {
     if (script) script.remove()
     return
@@ -52,13 +53,16 @@ function setOrUpdateJsonLd(schemaData) {
  * @param {string} [options.image]
  * @param {string} [options.url]
  * @param {string} [options.type]
+ * @param {string} [options.robots]
  * @param {Object|Array} [options.schema]
  */
-export function setSeoMeta({ title, description, keywords, image, url, type = 'website', schema = null } = {}) {
-  const metaTitle = title ? (title.includes('Truyện Audio Hay') ? title : `${title} - Truyện Audio Hay`) : DEFAULT_TITLE
+export function setSeoMeta({ title, description, keywords, image, url, type = 'website', robots = 'index, follow', schema = null } = {}) {
+  const metaTitle = title
+    ? (title.includes(BRAND_NAME) ? title : `${title} - ${BRAND_NAME}`)
+    : DEFAULT_TITLE
   const metaDesc = description || DEFAULT_DESCRIPTION
   const metaKeywords = keywords || DEFAULT_KEYWORDS
-  const metaImage = image || DEFAULT_IMAGE
+  const metaImage = image || (window.location.origin + DEFAULT_IMAGE)
 
   // Build clean canonical URL without extra query parameters if url is not explicitly provided
   const cleanUrl = url || (window.location.origin + window.location.pathname)
@@ -70,9 +74,10 @@ export function setSeoMeta({ title, description, keywords, image, url, type = 'w
   // Basic Meta
   setOrUpdateMeta('meta[name="description"]', 'name', 'description', metaDesc)
   setOrUpdateMeta('meta[name="keywords"]', 'name', 'keywords', metaKeywords)
+  setOrUpdateMeta('meta[name="robots"]', 'name', 'robots', robots)
 
   // OpenGraph
-  setOrUpdateMeta('meta[property="og:site_name"]', 'property', 'og:site_name', 'Truyện Audio Hay')
+  setOrUpdateMeta('meta[property="og:site_name"]', 'property', 'og:site_name', BRAND_NAME)
   setOrUpdateMeta('meta[property="og:title"]', 'property', 'og:title', metaTitle)
   setOrUpdateMeta('meta[property="og:description"]', 'property', 'og:description', metaDesc)
   setOrUpdateMeta('meta[property="og:image"]', 'property', 'og:image', metaImage)
@@ -99,4 +104,3 @@ export function resetSeoMeta() {
     image: DEFAULT_IMAGE,
   })
 }
-

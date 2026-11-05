@@ -334,8 +334,12 @@ const showSkeleton = computed(() => storyStore.detailLoading && !hasDetail.value
 
 const updatePageSeo = (currentStory) => {
   if (!currentStory) return
-  const title = currentStory.title ? `${currentStory.title} - Truyện Audio Hay` : ''
-  const description = currentStory.description || currentStory.synopsis || `Nghe truyện audio ${currentStory.title} miễn phí chất lượng cao trên Truyện Audio Hay.`
+  const title = currentStory.title ? `Nghe Truyện Audio ${currentStory.title} Full Mới Nhất - Truyện Audio 247` : ''
+  const authorText = currentStory.author ? ` tác giả ${currentStory.author}` : ''
+  const mcText = currentStory.narrator ? `, giọng đọc ${currentStory.narrator}` : ''
+  const rawDesc = currentStory.description || currentStory.synopsis || 'kho truyện audio chất lượng cao mượt mà.'
+  const description = `Nghe truyện audio ${currentStory.title}${authorText}${mcText}. ${rawDesc}`.replace(/\s+/g, ' ').trim().slice(0, 160)
+  const keywords = `${currentStory.title}, nghe truyện ${currentStory.title}, truyện audio ${currentStory.title}, audio ${currentStory.title} full, nghe truyện audio, truyện audio 247`
   const image = currentStory.image || currentStory.cover_url || ''
   const canonicalUrl = `${window.location.origin}/story/${currentStory.slug || currentStory.id}`
 
@@ -351,9 +355,13 @@ const updatePageSeo = (currentStory) => {
       '@type': 'Person',
       'name': currentStory.author || 'Đang cập nhật'
     },
+    'readBy': currentStory.narrator ? {
+      '@type': 'Person',
+      'name': currentStory.narrator
+    } : undefined,
     'publisher': {
       '@type': 'Organization',
-      'name': 'Truyện Audio Hay'
+      'name': 'Truyện Audio 247'
     },
     'aggregateRating': currentStory.rating ? {
       '@type': 'AggregateRating',
@@ -392,6 +400,7 @@ const updatePageSeo = (currentStory) => {
   setSeoMeta({
     title,
     description,
+    keywords,
     image,
     url: canonicalUrl,
     type: 'book',

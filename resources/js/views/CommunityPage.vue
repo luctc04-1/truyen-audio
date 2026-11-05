@@ -708,14 +708,14 @@ const handleTargetNavigation = async () => {
 onMounted(() => {
   loadPosts()
   setSeoMeta({
-    title: 'Cộng đồng thính giả - Truyện Audio Hay',
-    description: 'Tham gia thảo luận, đề xuất truyện hay và chia sẻ cảm nhận nghe truyện audio cùng cộng đồng thính giả trên Truyện Audio Hay.',
-    keywords: 'cộng đồng truyện audio, thảo luận truyện audio, đề xuất truyện hay, diễn đàn truyện audio',
+    title: 'Cộng đồng thính giả - Truyện Audio 247',
+    description: 'Tham gia thảo luận, đề xuất truyện hay và chia sẻ cảm nhận nghe truyện audio cùng cộng đồng thính giả trên Truyện Audio 247 (truyenaudio247.com).',
+    keywords: 'cộng đồng truyện audio, thảo luận truyện audio, đề xuất truyện hay, truyện audio 247, truyenaudio247',
     schema: {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      'name': 'Cộng đồng thính giả - Truyện Audio Hay',
-      'description': 'Giao lưu, chia sẻ và thảo luận về các bộ truyện audio chọn lọc hay nhất.',
+      'name': 'Cộng đồng thính giả - Truyện Audio 247',
+      'description': 'Giao lưu, chia sẻ và thảo luận về các bộ truyện audio chọn lọc hay nhất trên Truyện Audio 247.',
       'url': window.location.origin + '/community'
     }
   })

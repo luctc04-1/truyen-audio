@@ -7,13 +7,13 @@ const routes = [
     path: '/',
     name: 'Home',
     component: () => import('@/views/HomePage.vue'),
-    meta: { title: 'Trang chủ - Truyện Audio Hay Chọn Lọc Online' },
+    meta: { title: 'Truyện Audio 247 - Nghe Truyện Audio Hay Online Miễn Phí' },
   },
   {
     path: '/library',
     name: 'Library',
     component: () => import('@/views/LibraryPage.vue'),
-    meta: { title: 'Kho truyện - Truyện Audio Hay Chọn Lọc' },
+    meta: { title: 'Kho Truyện Audio Chọn Lọc | Truyện Audio 247' },
   },
   {
     path: '/story/:id',
@@ -24,37 +24,37 @@ const routes = [
     path: '/community',
     name: 'Community',
     component: () => import('@/views/CommunityPage.vue'),
-    meta: { title: 'Cộng đồng - Truyện Audio Hay' },
+    meta: { title: 'Cộng đồng thính giả - Truyện Audio 247' },
   },
   {
     path: '/vip',
     name: 'VIP',
     component: () => import('@/views/VIPPage.vue'),
-    meta: { title: 'Nâng cấp VIP - Truyện Audio Hay' },
+    meta: { title: 'Nâng cấp VIP Không Giới Hạn - Truyện Audio 247' },
   },
   {
     path: '/auth',
     name: 'Auth',
     component: () => import('@/views/AuthPage.vue'),
-    meta: { title: 'Đăng nhập / Đăng ký - Truyện Audio Hay', hideHeader: true, guestOnly: true },
+    meta: { title: 'Đăng nhập / Đăng ký - Truyện Audio 247', hideHeader: true, guestOnly: true },
   },
   {
     path: '/profile',
     name: 'Profile',
     component: () => import('@/views/ProfilePage.vue'),
-    meta: { title: 'Tài khoản cá nhân - Truyện Audio Hay', requiresAuth: true },
+    meta: { title: 'Tài khoản cá nhân - Truyện Audio 247', requiresAuth: true },
   },
   {
     path: '/history',
     name: 'History',
     component: () => import('@/views/HistoryPage.vue'),
-    meta: { title: 'Lịch sử nghe - Truyện Audio Hay', requiresAuth: true },
+    meta: { title: 'Lịch sử nghe - Truyện Audio 247', requiresAuth: true },
   },
   {
     path: '/follows',
     name: 'Follows',
     component: () => import('@/views/FollowsPage.vue'),
-    meta: { title: 'Truyện đang theo dõi - Truyện Audio Hay', requiresAuth: true },
+    meta: { title: 'Truyện đang theo dõi - Truyện Audio 247', requiresAuth: true },
   },
   {
     path: '/admin',
@@ -66,7 +66,7 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/HomePage.vue'),
-    meta: { title: 'Trang chủ - Truyện Audio Hay' },
+    meta: { title: 'Trang chủ - Truyện Audio 247' },
   },
 ]
 
@@ -107,4 +107,3 @@ router.afterEach((to) => {
 })
 
 export default router
-

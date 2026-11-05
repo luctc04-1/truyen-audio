@@ -96,7 +96,7 @@ class SeriesPresenter
             'is_premium'     => (bool) $episode->is_premium,
             'play_count'     => $plays,
             'plays'          => self::formatCount($plays),
-            'published_at'   => optional($episode->published_at ?? $episode->created_at)->toIso8601String(),
+            'published_at'   => optional($episode->publish_at ?? $episode->published_at ?? $episode->created_at)->toIso8601String(),
             'series'         => $series ? [
                 'id'    => $series->id,
                 'title' => $series->title,
