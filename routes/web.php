@@ -14,9 +14,12 @@ Route::get('/robots.txt', function () {
         'Disallow: /profile',
         'Disallow: /history',
         'Disallow: /follows',
-        'Disallow: /api/',
+        'Disallow: /api/admin/',
+        'Disallow: /api/user/',
+        'Disallow: /api/payment/',
+        'Allow: /api/',
         '',
-        'Sitemap: ' . url('/sitemap.xml'),
+        'Sitemap: ' . rtrim(url('/'), '/') . '/sitemap.xml',
     ]);
 
     return response($content, 200)->header('Content-Type', 'text/plain');
